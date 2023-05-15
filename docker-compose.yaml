@@ -1,0 +1,34 @@
+services:
+  influxdb: # http on port 8086 (gui/api)
+    image: "influxdb:2.7-alpine"
+    restart: "always"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: "setup"
+      DOCKER_INFLUXDB_INIT_USERNAME: "${INFLUX_USER}"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "${INFLUX_PASS}"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "${INFLUX_PASS}"
+      DOCKER_INFLUXDB_INIT_ORG: "${INFLUX_ORG}"
+      DOCKER_INFLUXDB_INIT_BUCKET: "default"
+    ports:
+      - "8086:8086" # http (gui/api)
+    volumes:
+      - "./docker-compose-volumes/influxdb/config/:/etc/influxdb2/"
+      - "./docker-compose-volumes/influxdb/data/:/var/lib/influxdb2/"
+      - "./docker-compose-resources/influxdb/setup-scripts/:/docker-entrypoint-initdb.d/:ro"
+    healthcheck:
+      test: "influx ping"
+      interval: 5s
+      timeout: 10s
+      retries: 5
+  telegraf:
+    image: "telegraf:1.26-alpine"
+    restart: "always"
+    environment:
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "${INFLUX_PASS}"
+      INFLUX_ORG: "${INFLUX_ORG}"
+    volumes:
+      - "./docker-compose-resources/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+      - "/:/hostfs:ro/"
+    depends_on:
+      - "influxdb"

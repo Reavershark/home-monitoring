@@ -1,1 +1,7 @@
+# Docker compose
+.env
+/docker-compose-volumes/*
+!/docker-compose-volumes/.gitkeep
+
+# Arduino
 settings.h
