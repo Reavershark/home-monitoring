@@ -17,9 +17,9 @@ services:
       - "./docker-compose-resources/influxdb/setup-scripts/:/docker-entrypoint-initdb.d/:ro"
     healthcheck:
       test: "influx ping"
-      interval: 5s
-      timeout: 10s
-      retries: 5
+        interval: 5s
+        timeout: 10s
+        retries: 5
   telegraf:
     image: "telegraf:1.26-alpine"
     restart: "always"
@@ -30,5 +30,14 @@ services:
     volumes:
       - "./docker-compose-resources/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
       - "/:/hostfs:ro/"
+    depends_on:
+      - "influxdb"
+  http-collector:
+    build: ./docker-compose-build/http-collector/
+    restart: "always"
+    environment:
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "${INFLUX_PASS}"
+      INFLUX_ORG: "${INFLUX_ORG}"
     depends_on:
       - "influxdb"
