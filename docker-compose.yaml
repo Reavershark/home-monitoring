@@ -43,3 +43,10 @@ services:
       INFLUX_ORG: "${INFLUX_ORG}"
     depends_on:
       - "influxdb"
+  landing-page:
+    image: lipanski/docker-static-website:2.1.0
+    restart: always
+    ports:
+      - "80:3000" # http
+    volumes:
+      - "./docker-compose-resources/landing-page/index.html:/home/static/index.html:ro"
