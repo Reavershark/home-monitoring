@@ -5,6 +5,6 @@ WORKDIR /app
 COPY ./requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./http_collector.py /app/http_collector.py
+COPY ./external_collector.py /app/external_collector.py
 
-CMD ["python", "http_collector.py"]
+CMD ["python", "-u", "external_collector.py"]
