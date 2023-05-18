@@ -90,7 +90,8 @@ void loop()
 
   unsigned long curr_timestamp_msecs = millis();
   unsigned long time_since_last_send = curr_timestamp_msecs - last_send_timestamp_msecs;
-  if (time_since_last_send >= send_interval_msecs) {
+  if (time_since_last_send >= send_interval_msecs)
+  {
     last_send_timestamp_msecs = curr_timestamp_msecs;
 
     int value = 1 + (millis() % 789) / 789.0;
@@ -99,14 +100,14 @@ void loop()
     // Use https://arduinojson.org/v6/assistant to get the recommended size
     // Example json: See readme file
     String json_string;
-    StaticJsonDocument<192> json;
     {
+      StaticJsonDocument<192> json; // Gets destroyed when leaving this scope
       json["measurement"] = "water_depth";
       json["tags"]["location"] = "some_canal";
       json["fields"]["depth_in_meters"] = value;
       json["bucket"] = "default";
+      serializeJson(json, json_string);
     }
-    serializeJson(doc, json_string);
     
     String http_message;
     {
