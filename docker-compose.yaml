@@ -44,9 +44,9 @@ services:
     depends_on:
       - "influxdb"
   landing-page:
-    image: lipanski/docker-static-website:2.1.0
-    restart: always
+    image: nginx:stable-alpine
+    restart: "always"
     ports:
-      - "80:3000" # http
+      - "80:80" # http
     volumes:
-      - "./docker-compose-resources/landing-page/index.html:/home/static/index.html:ro"
+      - "./docker-compose-resources/landing-page/:/usr/share/nginx/html/:ro"
