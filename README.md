@@ -51,6 +51,7 @@ Clone this repository and enter it:
 ```sh
 git clone git@github.com:Reavershark/home-monitoring.git
 cd home-monitoring
+git config pull.ff only
 ```
 
 Fill out the `.env` file (replace at least the password):
