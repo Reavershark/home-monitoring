@@ -4,7 +4,7 @@ set -e
 cd /docker-entrypoint-initdb.d
 
 echo "Creating buckets..."
-influx bucket create -n disk
+influx bucket create -n disk -r 8w
 echo "Buckets created"
 
 echo "Creating dashboards..."
