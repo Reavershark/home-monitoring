@@ -8,7 +8,18 @@
 // Libraries //
 ///////////////
 
-#include <WiFi.h>
+// Install with:
+//   - Set additional board manager urls in settings to:
+//       https://arduino.esp8266.com/stable/package_esp8266com_index.json
+//       https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+//   - Install esp8266 boards through the board manager (contains a good WiFi.h)
+//   - Install ArduinoJson through the library manager
+
+#ifdef ESP8266
+  #include <ESP8266WiFi.h>
+#else
+  #include <WiFi.h> // Works for arduino, esp32...
+#endif
 #include <WiFiClient.h>
 #include <ArduinoJson.h>
 
