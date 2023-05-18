@@ -77,14 +77,14 @@ services:
     depends_on:
       - "influxdb"
 
-  # Proxy for alerts/notifications, 
-  apprise: # http on port 8000 (gui/api)
+  # Proxy for alerts/notifications, can send to 80+ external apps (+ email, sms)
+  apprise: # http on port 8000 (config gui, api)
     image: "linuxserver/apprise-api:0.9.2"
     restart: "always"
     environment:
       PUID: "1000"
       PGID: "1000"
     ports:
-      - "8000:8000" # http (gui/api)
+      - "8000:8000" # http (config gui, api)
     volumes:
       - "./docker-compose-volumes/apprise/config/:/config/"
