@@ -1,4 +1,8 @@
 services:
+  ###########
+  # General #
+  ###########
+
   # Landing page
   landing-page: # http on port 80
     image: nginx:stable-alpine
@@ -20,7 +24,10 @@ services:
     cap_add:
       - NET_ADMIN
 
-  # Data processing stack
+  #########################
+  # Data processing stack #
+  #########################
+
   influxdb: # http on port 8086 (gui/api)
     image: "influxdb:2.7-alpine"
     restart: "always"
@@ -42,6 +49,8 @@ services:
       interval: 5s
       timeout: 10s
       retries: 5
+
+  # Collects stats about the system
   telegraf:
     image: "telegraf:1.26-alpine"
     restart: "always"
@@ -54,6 +63,8 @@ services:
       - "/:/hostfs:ro/"
     depends_on:
       - "influxdb"
+
+  # Takes point json messages through http and adds them to influxdb
   external-collector: # http on port 8080 (submit messages)
     build: ./docker-compose-build/external-collector/
     restart: "always"
