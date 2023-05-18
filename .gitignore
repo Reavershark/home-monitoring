@@ -3,5 +3,7 @@
 /docker-compose-volumes/*
 !/docker-compose-volumes/.gitkeep
 
+dnsmasq.conf
+
 # Arduino
 settings.h

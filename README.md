@@ -60,6 +60,15 @@ cp .env.example .env
 nano .env # Use your preferred editor
 ```
 
+Fill out the `dnsmasq.conf` file (Set the host:ip mappings, at least the ones for home-monitoring-pi(.local)):
+
+```sh
+cd docker-compose-resources/dns-server
+cp dnsmasq.conf.example dnsmasq.conf
+nano .env # Use your preferred editor
+cd -
+```
+
 Setup the docker compose project:
 
 ```sh

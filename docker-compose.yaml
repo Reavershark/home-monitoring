@@ -50,3 +50,13 @@ services:
       - "80:80" # http
     volumes:
       - "./docker-compose-resources/landing-page/:/usr/share/nginx/html/:ro"
+  dns-server:
+    image: 4km3/dnsmasq:2.85-r2
+    restart: "always"
+    ports:
+      - "53:53/udp" # dns (client - server)
+      #- "53:53/tcp" # dns (authorative server - authorative server) (not needed, our domain is local)
+    volumes:
+      - "./docker-compose-resources/dns-server/dnsmasq.conf:/etc/dnsmasq.conf"
+    cap_add:
+      - NET_ADMIN
