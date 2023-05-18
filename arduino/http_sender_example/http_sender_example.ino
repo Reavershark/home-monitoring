@@ -106,7 +106,8 @@ void loop()
 
             // Headers
             http_message += String("Host: ") + String(http_server_address) + String("\n");
-            http_message += "\n"; // Indicate end of headers with an empty line
+            http_message += String("Content-Length: ") + String(json.length()) + String("\n");
+            http_message += String("\n"); // Indicate end of headers with an empty line
 
             // Body
             http_message += json;
