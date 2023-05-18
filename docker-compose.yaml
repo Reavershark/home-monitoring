@@ -5,7 +5,7 @@ services:
 
   # Landing page
   landing-page: # http on port 80
-    image: nginx:stable-alpine
+    image: "nginx:stable-alpine"
     restart: "always"
     ports:
       - "80:80" # http
@@ -14,7 +14,7 @@ services:
 
   # Dns server (forwarding server, with a few local entries)
   dns-server: # dns on port 53/udp
-    image: 4km3/dnsmasq:2.85-r2
+    image: "4km3/dnsmasq:2.85-r2"
     restart: "always"
     ports:
       - "53:53/udp" # dns (client - server)
@@ -22,7 +22,7 @@ services:
     volumes:
       - "./docker-compose-resources/dns-server/dnsmasq.conf:/etc/dnsmasq.conf"
     cap_add:
-      - NET_ADMIN
+      - "NET_ADMIN"
 
   #########################
   # Data processing stack #
@@ -66,7 +66,7 @@ services:
 
   # Takes point json messages through http and adds them to influxdb
   external-collector: # http on port 8080 (submit messages)
-    build: ./docker-compose-build/external-collector/
+    build: "./docker-compose-build/external-collector/"
     restart: "always"
     ports:
       - "8080:8080" # http (submit messages)
@@ -76,3 +76,15 @@ services:
       INFLUX_ORG: "${INFLUX_ORG}"
     depends_on:
       - "influxdb"
+
+  # Proxy for alerts/notifications, 
+  apprise: # http on port 8000
+    image: "linuxserver/apprise-api:0.9.2"
+    restart: "always"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    ports:
+      - "8000:8000" # http (configuration panel)
+    volumes:
+      - "./docker-compose-volumes/apprise/config/:/config/"

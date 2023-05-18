@@ -115,6 +115,23 @@ The "measurement" string and at least one field in "fields" must be set.
 
 See the arduino examples for example implementations.
 
+## Alerting
+
+By default, alerting is not configured.
+You can configure the apps to send notifications to on [home-monitoring-pi.local:8000](http://home-monitoring-pi.local:8000).
+See [github.com/caronc/apprise/wiki#notification-services](https://github.com/caronc/apprise/wiki#notification-services) for supported services and creating apprise urls for them.
+
+Example apprise configuration:
+
+```yaml
+# Global tags
+tag: everything
+
+urls:
+  - tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000:
+      tag: telegram, tag2
+```
+
 ## Misc
 
 Command to export all resources (dashboards, tasks, notebooks, alerts...):
