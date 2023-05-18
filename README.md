@@ -65,7 +65,7 @@ Fill out the `dnsmasq.conf` file (Set the host:ip mappings, at least the ones fo
 ```sh
 cd docker-compose-resources/dns-server
 cp dnsmasq.conf.example dnsmasq.conf
-nano .env # Use your preferred editor
+nano dnsmasq.conf # Use your preferred editor
 cd -
 ```
 
