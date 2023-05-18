@@ -44,9 +44,9 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
                 # Validate the message json structure
                 # Example:
                 # {
-                #     "measurement": "h2o_feet",
-                #     "tags": {"location": "coyote_creek"}, // Optional
-                #     "fields": {"val": 1},
+                #     "measurement": "water_depth",
+                #     "tags": {"location": "some_canal"}, // Optional
+                #     "fields": {"depth_in_meters": 1},
                 #     "time": 100000.123, // Optional, generated automatically (secs since unix epoch),
                 #     "bucket": "rivers" // Optional, defaults to "default"
                 # }

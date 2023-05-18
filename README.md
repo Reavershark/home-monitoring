@@ -96,6 +96,25 @@ Within the `home-monitoring` folder, you can use these commands to manage the do
 Dangerous commands:
   - `dc down --remove-orphans && sudo rm volumes/* -rf`: **Delete all persistent storage. This cannot be undone!**
 
+## External ingress
+
+Messages can be sent either via http or mqtt (mqtt not yet implemented) that each contain a data point to store in influxdb.
+These json messages look like this:
+
+```json
+{
+    "measurement": "water_depth",
+    "tags": {"location": "some_canal"}, // Optional
+    "fields": {"depth_in_meters": 1},
+    "time": 100000.123, // Optional, generated automatically (secs since unix epoch),
+    "bucket": "rivers" // Optional, defaults to "default"
+}
+```
+
+The "measurement" string and at least one field in "fields" must be set.
+
+See the arduino examples for example implementations.
+
 ## Misc
 
 Command to export all resources (dashboards, tasks, notebooks, alerts...):

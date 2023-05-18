@@ -10,6 +10,7 @@
 
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <ArduinoJson.h>
 
 /////////////
 // Globals //
@@ -92,31 +93,29 @@ void loop()
     if (time_since_last_send >= send_interval_msecs) {
         last_send_timestamp_msecs = curr_timestamp_msecs;
 
-        int value = 1 + (millis() % 1000) / 1000.0;
+        int value = 1 + (millis() % 789) / 789.0;
 
         // Create json object to send
-        String json;
+        // Use https://arduinojson.org/v6/assistant to get the recommended size
+        // Example json: See readme file
+        String json_string;
+        StaticJsonDocument<192> json;
         {
-            json += String("{\n");
-            json += String("  \"measurement\": \"water_depth\",\n");
-            json += String("  \"tags\": {\"location\": \"some_canal\"},\n");
-            json += String("  \"fields\": {\"depth_in_meters\": ") + String(value) + String("},\n");
-            json += String("  \"bucket\": \"default\"\n");
-            json += String("}\n");
+            json["measurement"] = "water_depth";
+            json["tags"]["location"] = "some_canal";
+            json["fields"]["depth_in_meters"] = value;
+            json["bucket"] = "default";
         }
-
-
+        serializeJson(doc, json_string);
+        
         String http_message;
         {
             http_message += String("POST /somepath HTTP/1.1\n");
 
             // Headers
             http_message += String("Host: ") + String(http_server_address) + String("\n");
-            http_message += String("Content-Length: ") + String(json.length()) + String("\n");
+            http_message += String("Content-Length: ") + String(json_string.length()) + String("\n");
             http_message += String("\n"); // Indicate end of headers with an empty line
-
-            // Body
-            http_message += json;
         }
 
         tcp_client.print(http_message);
