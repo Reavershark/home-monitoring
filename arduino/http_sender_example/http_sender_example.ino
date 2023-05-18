@@ -92,13 +92,19 @@ void loop()
     if (time_since_last_send >= send_interval_msecs) {
         last_send_timestamp_msecs = curr_timestamp_msecs;
 
+        int value = 1 + (millis() % 1000) / 1000.0;
+
         // Create json object to send
         String json;
         {
-            json += "{\n";
-            json += "  \"hello\": \"world\"\n";
-            json += "}\n";
+            json += String("{\n");
+            json += String("  \"measurement\": \"water_depth\",\n");
+            json += String("  \"tags\": {\"location\": \"some_canal\"},\n");
+            json += String("  \"fields\": {\"depth_in_meters\": ") + String(value) + String("},\n");
+            json += String("  \"bucket\": \"default\"\n");
+            json += String("}\n");
         }
+
 
         String http_message;
         {
