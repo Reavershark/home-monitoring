@@ -38,6 +38,7 @@ services:
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "${INFLUX_PASS}"
       DOCKER_INFLUXDB_INIT_ORG: "${INFLUX_ORG}"
       DOCKER_INFLUXDB_INIT_BUCKET: "default"
+      INFLUXD_SESSION_LENGTH: "73634400" # Influx login session length in minutes (20 years)
     ports:
       - "8086:8086" # http (gui/api)
     volumes:
