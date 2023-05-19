@@ -23,7 +23,7 @@ def alert_queue_processor_thread_entrypoint(alert_queue: Queue):
 
             while True:
                 alert_str = alert_queue.get() # waits when empty
-                logging.info("alert_queue_processor_thread alert:", msg_str)
+                logging.info("alert_queue_processor_thread alert:", alert_str)
 
                 # Parse alert as json
                 try:
