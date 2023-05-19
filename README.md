@@ -42,6 +42,9 @@ echo 'alias d="docker"' >> .bashrc
 echo 'alias dc="docker compose"' >> .bashrc
 ```
 
+Limit the system journal size by setting `SystemMaxUse=50M` using `sudo nano /etc/systemd/journald.conf`.
+Then restart the journal service with `sudo systemctl restart systemd-journald.service`.
+
 Then restart your ssh session (`Ctrl-D` or `exit` and `ssh pi@...` again).
 
 ### Setup the project
