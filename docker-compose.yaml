@@ -65,7 +65,15 @@ services:
     depends_on:
       - "influxdb"
 
-  # Takes point json messages through http and adds them to influxdb
+  # Simple mqtt broker (no users, anonymous login enabled)
+  # Known topics are "data-points", "queries", "query-responses", "commands", "command-responses"
+  mqtt-broker: # mqtt on port 1883
+    build: "./docker-compose-build/mqtt-broker/"
+    restart: "always"
+    ports:
+      - "1883:1883" # mqtt
+
+  # Takes point json messages through http or mqtt and adds them to influxdb
   external-collector: # http on port 8080 (submit messages)
     build: "./docker-compose-build/external-collector/"
     restart: "always"
@@ -77,6 +85,7 @@ services:
       INFLUX_ORG: "${INFLUX_ORG}"
     depends_on:
       - "influxdb"
+      - "mqtt-broker"
 
   # Ingests alerts from influxdb, converts them to apprise notifications and sends them to apprise
   influxdb-alert-handler: # http on port 80 (ingest alerts from influxdb)
