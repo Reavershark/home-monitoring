@@ -132,6 +132,8 @@ urls:
       - tag: "telegram, tag2"
 ```
 
+In influxdb, you will need to create a `HTTP` alerting endpoint with method `POST`, url `http://influxdb-alert-handler/` and auth `none`.
+
 ## Misc
 
 Command to export all resources (dashboards, tasks, notebooks, alerts...):
