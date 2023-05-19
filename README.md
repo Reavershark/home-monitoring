@@ -64,7 +64,7 @@ cp .env.example .env
 nano .env # Use your preferred editor
 ```
 
-Fill out the `dnsmasq.conf` file (Set the host:ip mappings, at least the ones for home-monitoring-pi(.local)):
+Fill out the `dnsmasq.conf` file (Set the host:ip mappings, at least the ones for `home-monitoring-pi` and `home-monitoring-pi.local` (same ip)):
 
 ```sh
 cd docker-compose-resources/dns-server
@@ -72,6 +72,12 @@ cp dnsmasq.conf.example dnsmasq.conf
 nano dnsmasq.conf # Use your preferred editor
 cd -
 ```
+
+You can update your routers DHCP settings to include the ip of your pi as primary dns server.
+**If you do do this, make sure to set `1.1.1.1` or similar as secondary dns server!**
+This will allow you to use urls like http://home-monitoring-pi instead of http://192.168.x.x.
+Reconnect your computer to the network afterwards.
+(Also make sure you have not manually set a dns server in your network settings.)
 
 Setup the docker compose project:
 
@@ -81,7 +87,21 @@ dc up -d --build
 ```
 
 This will take a while.
-When finished, the influxdb interface can be accessed at http://pi-ip-address:8086.
+When it is finished, the landing page can be accessed at http://home-monitoring-pi (http://home-monitoring-pi.local for windows).
+
+### Alerting
+
+By default, alerting is not fully set up: you still need to specify where you want to receive notifications.
+You can configure the apps to send notifications to on [home-monitoring-pi.local:8000](http://home-monitoring-pi.local:8000).
+See [github.com/caronc/apprise/wiki#notification-services](https://github.com/caronc/apprise/wiki#notification-services) for supported services and creating "apprise urls" for them.
+
+Example apprise configuration for a telegram bot, sending notifications to one user:
+
+```yaml
+urls:
+  - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000":
+      - tag: "telegram, tag2"
+```
 
 ## Maintaining
 
@@ -101,7 +121,8 @@ Dangerous commands:
 
 ## External ingress
 
-Messages can be sent either via http or mqtt (mqtt not yet implemented) that each contain a data point to store in influxdb.
+Messages can be sent either via http or mqtt (on the "data-points" topic).
+The messages each contain a data point to be stored in influxdb.
 These json messages look like this:
 
 ```json
@@ -117,22 +138,6 @@ These json messages look like this:
 The "measurement" string and at least one field in "fields" must be set.
 
 See the arduino examples for example implementations.
-
-## Alerting
-
-By default, alerting is not configured.
-You can configure the apps to send notifications to on [home-monitoring-pi.local:8000](http://home-monitoring-pi.local:8000).
-See [github.com/caronc/apprise/wiki#notification-services](https://github.com/caronc/apprise/wiki#notification-services) for supported services and creating apprise urls for them.
-
-Example apprise configuration:
-
-```yaml
-urls:
-  - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000":
-      - tag: "telegram, tag2"
-```
-
-In influxdb, you will need to create a `HTTP` alerting endpoint with method `POST`, url `http://influxdb-alert-handler/` and auth `none`.
 
 ## Misc
 

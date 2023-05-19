@@ -1,0 +1,24 @@
+apiVersion: influxdata.com/v2alpha1
+kind: NotificationEndpointHTTP
+metadata:
+    name: keen-cerf-578003
+spec:
+    name: influxdb-alert-handler
+    description: Forwarder to apprise
+    status: active
+    type: none
+    url: http://influxdb-alert-handler/
+    method: POST
+---
+apiVersion: influxdata.com/v2alpha1
+kind: NotificationRule
+metadata:
+    name: practical-kapitsa-578005
+spec:
+    name: Send any change to apprise
+    every: 15s
+    offset: 5s
+    endpointName: keen-cerf-578003
+    statusRules:
+        - previousLevel: ANY
+          currentLevel: ANY
