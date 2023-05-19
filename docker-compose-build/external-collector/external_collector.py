@@ -31,7 +31,7 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
             write_api = client.write_api(write_options=SYNCHRONOUS)
 
             while True:
-                msg_str = message_queue.get() # waits when empty
+                msg_str, unix_time = message_queue.get() # waits when empty
                 logging.info("message_queue_processor_thread message:", msg_str)
 
                 # Parse message as json
@@ -67,13 +67,19 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
                         assert type(key) == str, f"The object \"fields\" has a non-string key: \"{key}\""
 
                     if "time" in msg:
-                        assert type(msg["time"]) == int or type(msg["time"]) == float, "The provided optional field \"time\" is not a number"
+                        assert type(msg["time"]) == str, "The provided optional field \"time\" is not a nanosecond unix timestamp string"
 
                     if "bucket" in msg:
                         assert type(msg["bucket"]) == str, "The provided optional field \"buckket\" is not a string"
                 except AssertError as e:
                     logging.warning(f"Validation failed for message \"{msg_str}\": {str(e)}")
                     continue
+
+                # Set the data point time
+                if "time" in msg:
+                    # Reassign unix_time
+                    unix_time = int(msg["time"])
+                msg["time"] = unix_time
 
                 # Create and the data point
                 data_point = Point.from_dict(msg, WritePrecision.NS)
@@ -104,7 +110,8 @@ def http_listener_thread_entrypoint(message_queue: Queue):
 
     @app.route("/", methods=['POST'])
     def new_message():
-        message_queue.put(request.data)
+        unix_time = int(time.time() * 1_000_000_000) # utc nanosecond unix timestamp
+        message_queue.put((request.data, unix_time))
         return Response(status=HTTPStatus.NO_CONTENT)
 
     app.run(host='0.0.0.0', port='8080')

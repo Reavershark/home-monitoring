@@ -109,7 +109,7 @@ These json messages look like this:
     "measurement": "water_depth",
     "tags": {"location": "some_canal"}, // Optional
     "fields": {"depth_in_meters": 1},
-    "time": 100000.123, // Optional, generated automatically (secs since unix epoch),
+    "time": "1500000001000000000", // Optional, generated automatically at the time of sending (nanosecs since unix epoch),
     "bucket": "rivers" // Optional, defaults to "default"
 }
 ```
