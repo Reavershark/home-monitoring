@@ -10,7 +10,7 @@ const long wifi_retry_connect_delay_msecs = 8000;
 
 // HTTP settings
 const char *http_server_address = "192.168.0.2"; // (change this)
-const long http_server_port = 80; // (possibly change this)
+const long http_server_port = 8080; // (possibly change this)
 
 // Data settings
 const long send_interval_msecs = 10000;
