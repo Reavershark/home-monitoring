@@ -124,12 +124,9 @@ See [github.com/caronc/apprise/wiki#notification-services](https://github.com/ca
 Example apprise configuration:
 
 ```yaml
-# Global tags
-tag: everything
-
 urls:
-  - tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000:
-      tag: telegram, tag2
+  - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000":
+      - tag: "telegram, tag2"
 ```
 
 ## Misc
