@@ -83,7 +83,7 @@ services:
     build: "./docker-compose-build/influxdb-alert-handler/"
     restart: "always"
     environment:
-      APPRISE_URL: "http://apprise:8080/notify/apprise"
+      APPRISE_URL: "http://apprise:8000/notify/apprise"
     depends_on:
       - "influxdb"
       - "apprise"
