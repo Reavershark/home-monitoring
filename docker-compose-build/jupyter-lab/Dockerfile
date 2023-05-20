@@ -1,6 +1,6 @@
 FROM python:3.10-alpine
 
-RUN apk add --no-cache bash gcc musl-dev linux-headers cargo
+RUN apk add --no-cache bash gcc musl-dev libffi-dev linux-headers cargo
 RUN pip install jupyterlab jupyter_collaboration
 
 # Disable "Would you like to receive official Jupyter news?" message
