@@ -30,68 +30,70 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
             write_api = client.write_api(write_options=SYNCHRONOUS)
 
             while True:
-                msg_str, unix_time = message_queue.get() # waits when empty
-                logging.info(f"message_queue_processor_thread message: {msg_str}")
-
-                # Parse message as json
                 try:
-                    msg = json.loads(msg_str)
-                except Exception:
-                    logging.warning(f"Invalid json message \"{msg_str}\":")
-                    continue
+                    msg_str, unix_time = message_queue.get() # waits when empty
+                    logging.info(f"message_queue_processor_thread message: {msg_str}")
 
-                # Validate the message json structure
-                # Example:
-                # {
-                #     "measurement": "water_depth",
-                #     "tags": {"location": "some_canal"}, // Optional
-                #     "fields": {"depth_in_meters": 1},
-                #     "time": 100000.123, // Optional, generated automatically (secs since unix epoch),
-                #     "bucket": "rivers" // Optional, defaults to "default"
-                # }
-                try:
-                    assert type(msg) == dict, "The message is not a json object"
+                    # Parse message as json
+                    try:
+                        msg = json.loads(msg_str)
+                    except Exception:
+                        logging.warning(f"Invalid json message \"{msg_str}\":")
+                        continue
 
-                    assert "measurement" in msg, "The field \"measurement\" is missing"
-                    assert type(msg["measurement"]) == str, "The field \"measurement\" is not a string"
+                    # Validate the message json structure
+                    # Example:
+                    # {
+                    #     "measurement": "water_depth",
+                    #     "tags": {"location": "some_canal"}, // Optional
+                    #     "fields": {"depth_in_meters": 1},
+                    #     "time": 100000.123, // Optional, generated automatically (secs since unix epoch),
+                    #     "bucket": "rivers" // Optional, defaults to "default"
+                    # }
+                    try:
+                        assert type(msg) == dict, "The message is not a json object"
 
-                    if "tags" in msg:
-                        assert type(msg["tags"]) == dict, "The provided optional field \"tags\" is not an object"
-                        for key, value in msg["tags"].items():
-                            assert type(key) == str and type(value) == str, f"The provided object \"tags\" has an entry with invalid type(s): \"{key}:{value}\", should both be strings"
+                        assert "measurement" in msg, "The field \"measurement\" is missing"
+                        assert type(msg["measurement"]) == str, "The field \"measurement\" is not a string"
 
-                    assert "fields" in msg, "The field \"fields\" is missing"
-                    assert type(msg["fields"]) == dict, "The field \"fields\" is not an object"
-                    for key, value in msg["fields"].items():
-                        assert type(key) == str, f"The object \"fields\" has a non-string key: \"{key}\""
+                        if "tags" in msg:
+                            assert type(msg["tags"]) == dict, "The provided optional field \"tags\" is not an object"
+                            for key, value in msg["tags"].items():
+                                assert type(key) == str and type(value) == str, f"The provided object \"tags\" has an entry with invalid type(s): \"{key}:{value}\", should both be strings"
 
+                        assert "fields" in msg, "The field \"fields\" is missing"
+                        assert type(msg["fields"]) == dict, "The field \"fields\" is not an object"
+                        for key, value in msg["fields"].items():
+                            assert type(key) == str, f"The object \"fields\" has a non-string key: \"{key}\""
+
+                        if "time" in msg:
+                            assert type(msg["time"]) == str, "The provided optional field \"time\" is not a nanosecond unix timestamp string"
+
+                        if "bucket" in msg:
+                            assert type(msg["bucket"]) == str, "The provided optional field \"buckket\" is not a string"
+                    except AssertError as e:
+                        logging.warning(f"Validation failed for message \"{msg_str}\": {str(e)}")
+                        continue
+
+                    # Set the data point time
                     if "time" in msg:
-                        assert type(msg["time"]) == str, "The provided optional field \"time\" is not a nanosecond unix timestamp string"
+                        # Reassign unix_time
+                        unix_time = int(msg["time"])
+                    msg["time"] = unix_time
 
-                    if "bucket" in msg:
-                        assert type(msg["bucket"]) == str, "The provided optional field \"buckket\" is not a string"
-                except AssertError as e:
-                    logging.warning(f"Validation failed for message \"{msg_str}\": {str(e)}")
-                    continue
+                    # Create and the data point
+                    data_point = Point.from_dict(msg, WritePrecision.NS)
 
-                # Set the data point time
-                if "time" in msg:
-                    # Reassign unix_time
-                    unix_time = int(msg["time"])
-                msg["time"] = unix_time
-
-                # Create and the data point
-                data_point = Point.from_dict(msg, WritePrecision.NS)
-
-                # Write the data point to a bucket
-                write_api.write(
-                    bucket=msg["bucket"] if "bucket" in msg else "default",
-                    org=INFLUX_ORG,
-                    record=data_point
-                )
-
-                message_queue.task_done()
+                    # Write the data point to a bucket
+                    write_api.write(
+                        bucket=msg["bucket"] if "bucket" in msg else "default",
+                        org=INFLUX_ORG,
+                        record=data_point
+                    )
+                finally:
+                    message_queue.task_done()
         except Exception as e:
+            logging.error(type(e))
             logging.error(f"Exception in message_queue_processor_thread: {str(e)}")
             wait_secs = 1
             logging.error(f"Restarting message_queue_processor_thread in {wait_secs} {'sec' if wait_secs == 1 else 'secs'}")
