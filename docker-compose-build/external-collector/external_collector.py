@@ -5,6 +5,7 @@ from threading import Thread
 
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.rest import ApiException
 
 import paho.mqtt.client as mqtt
 
@@ -85,11 +86,19 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
                     data_point = Point.from_dict(msg, WritePrecision.NS)
 
                     # Write the data point to a bucket
-                    write_api.write(
-                        bucket=msg["bucket"] if "bucket" in msg else "default",
-                        org=INFLUX_ORG,
-                        record=data_point
-                    )
+                    bucket = msg["bucket"] if "bucket" in msg else "default"
+                    try:
+                        write_api.write(
+                            bucket=bucket,
+                            org=INFLUX_ORG,
+                            record=data_point
+                        )
+                    except ApiException as e:
+                        if e.status == 404:
+                            logging.warning(f"Failed writing data point: bucket \"{bucket}\" does not exist")
+                            continue
+                        else:
+                            raise e
                 finally:
                     message_queue.task_done()
         except Exception as e:
