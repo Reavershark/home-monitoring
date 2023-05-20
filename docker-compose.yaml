@@ -83,6 +83,8 @@ services:
       INFLUX_URL: "http://influxdb:8086"
       INFLUX_TOKEN: "${INFLUX_PASS}"
       INFLUX_ORG: "${INFLUX_ORG}"
+      MQTT_BROKER_ADDRESS: "mqtt-broker"
+      MQTT_BROKER_PORT: "1883"
     depends_on:
       - "influxdb"
       - "mqtt-broker"

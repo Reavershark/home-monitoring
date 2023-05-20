@@ -1,2 +1,3 @@
 influxdb-client==1.36.*
+paho-mqtt==1.6.*
 flask==2.3.*
