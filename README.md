@@ -100,7 +100,8 @@ Example apprise configuration for a telegram bot, sending notifications to one u
 ```yaml
 urls:
   - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000":
-      - tag: "telegram, tag2"
+      - format: "HTML"
+        tag: "telegram, tag2"
 ```
 
 ## Maintaining
