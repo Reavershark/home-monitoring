@@ -89,6 +89,20 @@ services:
       - "influxdb"
       - "mqtt-broker"
 
+  # Runs custom scripts in intervals that perform checks, send alerts, send commands...
+  custom-scripts:
+    build: "./docker-compose-build/custom-scripts/"
+    restart: "always"
+    environment:
+      INFLUX_URL: "http://influxdb:8086"
+      INFLUX_TOKEN: "${INFLUX_PASS}"
+      INFLUX_ORG: "${INFLUX_ORG}"
+      MQTT_BROKER_ADDRESS: "mqtt-broker"
+      MQTT_BROKER_PORT: "1883"
+    depends_on:
+      - "influxdb"
+      - "mqtt-broker"
+
   # Ingests alerts from influxdb, converts them to apprise notifications and sends them to apprise
   influxdb-alert-handler: # http on port 80 (ingest alerts from influxdb)
     build: "./docker-compose-build/influxdb-alert-handler/"
