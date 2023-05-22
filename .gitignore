@@ -5,5 +5,7 @@
 
 dnsmasq.conf
 
+custom_scripts.py
+
 # Arduino
 settings.h
