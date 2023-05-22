@@ -140,6 +140,13 @@ The "measurement" string and at least one field in "fields" must be set.
 
 See the arduino examples for example implementations.
 
+## Custom scripts
+
+If you want to run custom python scripts that e.g. perform checks using influxdb queries, send alerts through apprise, send commands over mqtt...
+You can just place them as *runs* in `docker-compose-build/custom_scripts/custom_scripts.py`.
+Copy one of the examples and start from there.
+Make sure to register your run function along with a `timeinterval`!
+
 ## Misc
 
 Command to export all resources (dashboards, tasks, notebooks, alerts...):
