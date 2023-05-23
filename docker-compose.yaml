@@ -17,8 +17,8 @@ services:
     image: "4km3/dnsmasq:2.85-r2"
     restart: "always"
     ports:
-      - "53:53/udp" # dns (client - server)
-      #- "53:53/tcp" # dns (authorative server - authorative server) (not needed, our domain is local)
+      - "53:53/udp" # dns (client -> server)
+      #- "53:53/tcp" # dns (authorative server -> authorative server) (not needed, our domain is local)
     volumes:
       - "./docker-compose-resources/dns-server/dnsmasq.conf:/etc/dnsmasq.conf"
     cap_add:
@@ -51,7 +51,7 @@ services:
       timeout: 10s
       retries: 5
 
-  # Collects stats about the system
+  # Collects stats about the system, stores them in influxdb buckets
   telegraf:
     image: "telegraf:1.26-alpine"
     restart: "always"
@@ -112,6 +112,8 @@ services:
       MQTT_BROKER_ADDRESS: "mqtt-broker"
       MQTT_BROKER_PORT: "1883"
       APPRISE_URL: "http://apprise:8000/notify/apprise"
+    volumes:
+      - "./docker-compose-volumes/custom-scripts/data/:/app/data/"
     depends_on:
       - "influxdb"
       - "mqtt-broker"
