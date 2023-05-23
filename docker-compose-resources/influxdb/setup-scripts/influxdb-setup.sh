@@ -13,10 +13,3 @@ for file in $(ls dashboards); do
     influx apply -f "dashboards/${file}" --force yes
 done
 echo "Dashboards created"
-
-echo "Creating alerting resources..."
-for file in $(ls alerting); do
-    echo "Creating alerting resource \"${file}\""
-    influx apply -f "alerting/${file}" --force yes
-done
-echo "Alerting resources created"
