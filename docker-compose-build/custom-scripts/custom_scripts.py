@@ -60,6 +60,10 @@ def app():
     # Run helper functions #
     ########################
 
+    def flux_query(query: str) -> TableList:
+        query_api: QueryApi = client.query_api()
+        return query_api.query(query)
+
     def send_alert(title: str, body: str, tags: list[str] = ["all"]) -> None:
         apprise_msg = {
             "title": f"<b>{title}</b>",
@@ -87,6 +91,7 @@ def app():
         times_called = last_state.get("times_called", 0) + 1
         runlog.info(f"Times called: {times_called}")
 
+        # Return a new state
         return {
             "times_called": times_called
         }
@@ -102,15 +107,11 @@ def app():
         runlog = applog.getChild("example_run2")
         runlog.info("Example run 2")
 
-        query_api: QueryApi = client.query_api()
-
-        query = """
+        tables: TableList = flux_query("""
             from(bucket: "disk")
                 |> range(start: -1h)
                 |> filter(fn: (r) => r._measurement == "disk" and r._field == "used_percent")
-        """
-
-        tables: TableList = query_api.query(query)
+        """)
 
         # Print the last record
         assert len(tables) == 1, f"Expected one table, but got {len(tables)}"
