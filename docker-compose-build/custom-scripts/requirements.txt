@@ -1,1 +1,2 @@
 influxdb-client==1.36.*
+requests==2.30.*

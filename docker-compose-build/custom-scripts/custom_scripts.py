@@ -9,6 +9,8 @@ from influxdb_client import InfluxDBClient
 from influxdb_client.client.query_api import QueryApi
 from influxdb_client.client.flux_table import TableList, FluxTable, FluxRecord
 
+import requests
+
 logging.basicConfig(format='%(asctime)s: %(levelname)s: %(name)s: %(message)s')
 rootlog = logging.root
 rootlog.setLevel(logging.INFO)
@@ -16,21 +18,30 @@ rootlog.setLevel(logging.INFO)
 def app():
     applog = rootlog.getChild("app")
 
-    #########################
-    # Setup influxdb client #
-    #########################
+    #############################
+    # Get environment variables #
+    #############################
 
     try:
         INFLUX_URL = os.environ["INFLUX_URL"]
         INFLUX_TOKEN = os.environ["INFLUX_TOKEN"]
         INFLUX_ORG = os.environ["INFLUX_ORG"]
+        MQTT_BROKER_ADDRESS = os.environ["MQTT_BROKER_ADDRESS"]
+        MQTT_BROKER_PORT = os.environ["MQTT_BROKER_PORT"]
+        APPRISE_URL = os.environ["APPRISE_URL"]
     except KeyError as e:
-        raise Exception(f"Missing environment variable: {str(e)}")
-    
+        raise Exception(f"Missing environment variable: {e}")
+
+
+    #########################
+    # Setup influxdb client #
+    #########################
+
     client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
     client.ping()
     applog.info(f"Connected to InfluxDB at \"{INFLUX_URL}\"")
-    
+
+
     #######################################
     # Run class and register_run function #
     #######################################
@@ -44,6 +55,22 @@ def app():
     def register_run(run: Run) -> None:
         runs.append(run)
     
+
+    ########################
+    # Run helper functions #
+    ########################
+
+    def send_alert(title: str, body: str, tags: list[str] = ["all"]) -> None:
+        apprise_msg = {
+            "title": f"<b>{title}</b>",
+            "body": "",
+            "tag": ", ".join(tags)
+        }
+        try:
+            requests.post(url=APPRISE_URL, data=apprise_msg)
+        except Exception as e:
+            raise Exception(f"Failed to send a notification: {e}")
+
     
     #################
     # Run functions #
@@ -59,7 +86,7 @@ def app():
 
         times_called = last_state.get("times_called", 0) + 1
         runlog.info(f"Times called: {times_called}")
-        
+
         return {
             "times_called": times_called
         }

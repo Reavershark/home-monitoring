@@ -99,9 +99,11 @@ services:
       INFLUX_ORG: "${INFLUX_ORG}"
       MQTT_BROKER_ADDRESS: "mqtt-broker"
       MQTT_BROKER_PORT: "1883"
+      APPRISE_URL: "http://apprise:8000/notify/apprise"
     depends_on:
       - "influxdb"
       - "mqtt-broker"
+      - "apprise"
 
   # Ingests alerts from influxdb, converts them to apprise notifications and sends them to apprise
   influxdb-alert-handler: # http on port 80 (ingest alerts from influxdb)
