@@ -73,6 +73,15 @@ nano dnsmasq.conf # Use your preferred editor
 cd -
 ```
 
+You create a `custom_scripts.py` file from the `custom_scripts.py.example` file.
+You don't have to edit anything, this script does nothing by default: 
+
+```sh
+cd docker-compose-build/custom_scripts
+cp custom_scripts.py.example custom_scripts.py
+cd -
+``` 
+
 You can update your routers DHCP settings to include the ip of your pi as primary dns server.
 **If you do do this, make sure to set `1.1.1.1` or similar as secondary dns server!**
 This will allow you to use urls like http://home-monitoring-pi instead of http://192.168.x.x.
@@ -88,21 +97,6 @@ dc up -d --build
 
 This will take a while.
 When it is finished, the landing page can be accessed at http://home-monitoring-pi (http://home-monitoring-pi.local for windows).
-
-### Alerting
-
-By default, alerting is not fully set up: you still need to specify where you want to receive notifications.
-You can configure the apps to send notifications to on [home-monitoring-pi.local:8000](http://home-monitoring-pi.local:8000).
-See [github.com/caronc/apprise/wiki#notification-services](https://github.com/caronc/apprise/wiki#notification-services) for supported services and creating "apprise urls" for them.
-
-Example apprise configuration for a telegram bot, sending notifications to one user:
-
-```yaml
-urls:
-  - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000":
-      - format: "HTML"
-        tag: "telegram, tag2"
-```
 
 ## Maintaining
 
@@ -143,9 +137,22 @@ See the arduino examples for example implementations.
 ## Custom scripts
 
 If you want to run custom python scripts that e.g. perform checks using influxdb queries, send alerts through apprise, send commands over mqtt...
-You can just place them as *runs* in `docker-compose-build/custom_scripts/custom_scripts.py`.
+You can write *runs* in `docker-compose-build/custom_scripts/custom_scripts.py`.
 Copy one of the examples and start from there.
 Make sure to register your run function along with a `timeinterval`!
+
+If you want to use the `send_alert` helper function, you first need to specify where you want to receive notifications in apprise.
+You can configure the apps to send notifications to on [home-monitoring-pi.local:8000](http://home-monitoring-pi.local:8000).
+See [github.com/caronc/apprise/wiki#notification-services](https://github.com/caronc/apprise/wiki#notification-services) for supported services and creating "apprise urls" for them.
+
+Example apprise configuration for a telegram bot, sending notifications to one user:
+
+```yaml
+urls:
+  - "tgram://0000000000:xxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxx/0000000000": # format: tgram://bot-token/user1/user2/...
+      - format: "HTML"
+        tag: "telegram, tag2"
+```
 
 ## Misc
 
