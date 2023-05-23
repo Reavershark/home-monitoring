@@ -126,18 +126,3 @@ services:
       - "8000:8000" # http (config gui, api)
     volumes:
       - "./docker-compose-volumes/apprise/config/:/config/"
-
-  # Browser-based collaborative python IDE
-  jupyter-lab: # http on port 9000 (gui)
-    build: "./docker-compose-build/jupyter-lab/"
-    restart: "always"
-    environment:
-      INFLUX_URL: "http://influxdb:8086"
-      INFLUX_TOKEN: "${INFLUX_PASS}"
-      INFLUX_ORG: "${INFLUX_ORG}"
-      MQTT_BROKER_ADDRESS: "mqtt-broker"
-      MQTT_BROKER_PORT: "1883"
-    ports:
-      - "9000:9000" # http (gui)
-    volumes:
-      - "/:/hostos/"
