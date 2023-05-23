@@ -9,3 +9,9 @@ custom_scripts.py
 
 # Arduino
 settings.h
+
+# Temp files
+*.swp
+*.pyc
+.ipynb_checkpoints
+/temp
