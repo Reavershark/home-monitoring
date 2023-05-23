@@ -23,9 +23,9 @@ def app():
     #############################
 
     try:
-        INFLUX_URL = os.environ["INFLUX_URL"]
-        INFLUX_TOKEN = os.environ["INFLUX_TOKEN"]
-        INFLUX_ORG = os.environ["INFLUX_ORG"]
+        INFLUXDB_URL = os.environ["INFLUXDB_URL"]
+        INFLUXDB_TOKEN = os.environ["INFLUXDB_TOKEN"]
+        INFLUXDB_ORG = os.environ["INFLUXDB_ORG"]
         MQTT_BROKER_ADDRESS = os.environ["MQTT_BROKER_ADDRESS"]
         MQTT_BROKER_PORT = os.environ["MQTT_BROKER_PORT"]
         APPRISE_URL = os.environ["APPRISE_URL"]
@@ -37,9 +37,9 @@ def app():
     # Setup influxdb client #
     #########################
 
-    client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+    client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
     client.ping()
-    applog.info(f"Connected to InfluxDB at \"{INFLUX_URL}\"")
+    applog.info(f"Connected to InfluxDB at \"{INFLUXDB_URL}\"")
 
 
     #######################################

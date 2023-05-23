@@ -33,10 +33,10 @@ services:
     restart: "always"
     environment:
       DOCKER_INFLUXDB_INIT_MODE: "setup"
-      DOCKER_INFLUXDB_INIT_USERNAME: "${INFLUX_USER}"
-      DOCKER_INFLUXDB_INIT_PASSWORD: "${INFLUX_PASS}"
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "${INFLUX_PASS}"
-      DOCKER_INFLUXDB_INIT_ORG: "${INFLUX_ORG}"
+      DOCKER_INFLUXDB_INIT_USERNAME: "${INFLUXDB_USER}"
+      DOCKER_INFLUXDB_INIT_PASSWORD: "${INFLUXDB_PASS}"
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: "${INFLUXDB_PASS}"
+      DOCKER_INFLUXDB_INIT_ORG: "${INFLUXDB_ORG}"
       DOCKER_INFLUXDB_INIT_BUCKET: "default"
       INFLUXD_SESSION_LENGTH: "73634400" # Influx login session length in minutes (20 years)
     ports:
@@ -56,9 +56,9 @@ services:
     image: "telegraf:1.26-alpine"
     restart: "always"
     environment:
-      INFLUX_URL: "http://influxdb:8086"
-      INFLUX_TOKEN: "${INFLUX_PASS}"
-      INFLUX_ORG: "${INFLUX_ORG}"
+      INFLUXDB_URL: "http://influxdb:8086"
+      INFLUXDB_TOKEN: "${INFLUXDB_PASS}"
+      INFLUXDB_ORG: "${INFLUXDB_ORG}"
     volumes:
       - "./docker-compose-resources/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
       - "/:/hostfs/:ro"
@@ -80,9 +80,9 @@ services:
     ports:
       - "8080:8080" # http (submit messages)
     environment:
-      INFLUX_URL: "http://influxdb:8086"
-      INFLUX_TOKEN: "${INFLUX_PASS}"
-      INFLUX_ORG: "${INFLUX_ORG}"
+      INFLUXDB_URL: "http://influxdb:8086"
+      INFLUXDB_TOKEN: "${INFLUXDB_PASS}"
+      INFLUXDB_ORG: "${INFLUXDB_ORG}"
       MQTT_BROKER_ADDRESS: "mqtt-broker"
       MQTT_BROKER_PORT: "1883"
     depends_on:
@@ -106,9 +106,9 @@ services:
     build: "./docker-compose-build/custom-scripts/"
     restart: "always"
     environment:
-      INFLUX_URL: "http://influxdb:8086"
-      INFLUX_TOKEN: "${INFLUX_PASS}"
-      INFLUX_ORG: "${INFLUX_ORG}"
+      INFLUXDB_URL: "http://influxdb:8086"
+      INFLUXDB_TOKEN: "${INFLUXDB_PASS}"
+      INFLUXDB_ORG: "${INFLUXDB_ORG}"
       MQTT_BROKER_ADDRESS: "mqtt-broker"
       MQTT_BROKER_PORT: "1883"
       APPRISE_URL: "http://apprise:8000/notify/apprise"

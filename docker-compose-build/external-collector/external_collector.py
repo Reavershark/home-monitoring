@@ -20,13 +20,13 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
     while True:
         try:
             try:
-                INFLUX_URL = os.environ["INFLUX_URL"]
-                INFLUX_TOKEN = os.environ["INFLUX_TOKEN"]
-                INFLUX_ORG = os.environ["INFLUX_ORG"]
+                INFLUXDB_URL = os.environ["INFLUXDB_URL"]
+                INFLUXDB_TOKEN = os.environ["INFLUXDB_TOKEN"]
+                INFLUXDB_ORG = os.environ["INFLUXDB_ORG"]
             except KeyError as e:
                 raise Exception(f"Missing environment variable: {str(e)}")
 
-            client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+            client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 
             write_api = client.write_api(write_options=SYNCHRONOUS)
 
@@ -90,7 +90,7 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
                     try:
                         write_api.write(
                             bucket=bucket,
-                            org=INFLUX_ORG,
+                            org=INFLUXDB_ORG,
                             record=data_point
                         )
                     except ApiException as e:
