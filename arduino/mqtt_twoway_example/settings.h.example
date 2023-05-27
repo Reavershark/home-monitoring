@@ -1,0 +1,20 @@
+#pragma once
+
+struct Settings
+{
+public:
+  // Wifi settings
+  const char *wifi_ssid = "myssid"; // (change this)
+  const char *wifi_pass = "mypass"; // (change this)
+  
+  // HTTP settings
+  const char *http_server_address = "192.168.0.2"; // (change this)
+  const long http_server_port = 8080; // (possibly change this)
+  const long send_interval_msecs = 10000;
+
+  // Serial settings
+  const bool use_serial = false;
+};
+
+Settings settings;
+

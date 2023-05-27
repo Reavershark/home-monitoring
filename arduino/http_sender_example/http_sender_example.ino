@@ -2,7 +2,7 @@
 //   - Set additional board manager urls in settings to:
 //       https://arduino.esp8266.com/stable/package_esp8266com_index.json
 //       https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-//   - Install esp8266 boards through the board manager (contains a good WiFi.h)
+//   - Install esp8266 boards through the board manager (contains a good WiFiClient.h)
 //   - Install ArduinoJson through the library manager
 
 #include "settings.h" // Create by copying settings.h.example to settings.h and filling in the dummy values
@@ -11,12 +11,11 @@
 #include "util.h"
 #include <ArduinoJson.h>
 
-WifiHttpClient client = WifiHttpClient(
+WifiHttpClient client(
     settings.wifi_ssid, settings.wifi_pass,
     settings.http_server_address, settings.http_server_port,
     settings.use_serial
 );
-unsigned long last_send_timestamp_msecs = 0;
 
 void setup()
 {
@@ -49,6 +48,9 @@ void loop()
     client.send_post(json_string);
   };
 
-  ulong state = 0;
-  run_in_interval_nonblocking(&state, settings.send_interval_msecs, read_and_send_data);
+  // Call read_and_send_data() every send_interval_msecs
+  {
+    uint32_t state = 0;
+    run_in_interval_nonblocking(&state, settings.send_interval_msecs, read_and_send_data);
+  }
 }
