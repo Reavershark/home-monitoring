@@ -1,16 +1,20 @@
 #pragma once
 
-// Serial settings
-#define USE_SERIAL // Place // at the start of this line to not use serial at all
+struct Settings
+{
+public:
+  // Wifi settings
+  const char *wifi_ssid = "myssid"; // (change this)
+  const char *wifi_pass = "mypass"; // (change this)
+  
+  // HTTP settings
+  const char *http_server_address = "192.168.0.2"; // (change this)
+  const long http_server_port = 8080; // (possibly change this)
+  const long send_interval_msecs = 10000;
 
-// Wifi settings
-const char *wifi_ssid = "myssid"; // (change this)
-const char *wifi_pass = "mypass"; // (change this)
-const long wifi_retry_connect_delay_msecs = 8000;
+  // Serial settings
+  const bool use_serial = false;
+};
 
-// HTTP settings
-const char *http_server_address = "192.168.0.2"; // (change this)
-const long http_server_port = 8080; // (possibly change this)
+Settings settings;
 
-// Data settings
-const long send_interval_msecs = 10000;
