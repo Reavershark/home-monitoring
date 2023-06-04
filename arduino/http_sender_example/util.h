@@ -13,7 +13,7 @@ template<typename T>
 void run_in_interval_nonblocking(uint32_t *const state, const uint32_t interval_msecs, T func)
 {
   uint32_t &last_send_timestamp_msecs = *state;
-  
+
   const uint32_t curr_timestamp_msecs = millis();
   if (curr_timestamp_msecs < last_send_timestamp_msecs) // Detect millis() overflow
     last_send_timestamp_msecs = 0;
