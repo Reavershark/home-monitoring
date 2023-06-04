@@ -1,3 +1,8 @@
+"""
+Reload this script by running the following command in the home-monitoring directory:
+$ dc up -d --build custom-scripts
+"""
+
 from typing import Callable
 
 import os, shutil, json, time, logging
