@@ -2,7 +2,7 @@
 //   - Set additional board manager urls in settings to:
 //       https://arduino.esp8266.com/stable/package_esp8266com_index.json
 //       https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-//   - Install esp8266 boards through the board manager (contains a good WiFiClient.h)
+//   - Install esp8266 boards through the board manager (contains a good WiFiClient.h for arduinos)
 //   - Install ArduinoMqttClient through the library manager
 //   - Install ArduinoJson through the library manager
 
@@ -40,6 +40,8 @@ void setup();
 void loop();
 void read_and_publish_data();
 void on_mqtt_message(String &topic, String &message);
+void turn_on();
+void turn_off();
 
 
 ///                    ///
@@ -48,7 +50,7 @@ void on_mqtt_message(String &topic, String &message);
 
 void setup()
 {
-  if (settings.use_serial) Serial.begin(9600);
+  if (settings.use_serial) Serial.begin(115200);
   client.first_connect();
   client.subscribe(topic);
   client.set_on_message(on_mqtt_message);
@@ -70,7 +72,7 @@ void loop()
 
 void read_and_publish_data()
 {
-  int32_t value = random(1, 10);
+  float value = (float)random(1, 10);
   
   String json_string;
   {
@@ -92,25 +94,40 @@ void read_and_publish_data()
 
 void on_mqtt_message(String &topic, String &message)
 {
-  DynamicJsonDocument json(settings.incoming_message_size_limit); // Gets destroyed when leaving this scope
+  DynamicJsonParseResult parse_result = dynamic_json_parse(message, settings.incoming_message_size_limit, settings.use_serial); // Gets destroyed when leaving this scope
+  if (!parse_result.success) return;
+  DynamicJsonDocument &json = parse_result.json;
+  
+  if (json["target"] == "me")
+  {
+    if (json["command"] == "on")
+    {
+      turn_on();
+    }
+    else if (json["command"] == "off")
+    {
+      turn_off();
+    }
+    else
+    {
+      if (settings.use_serial)
+      {
+        Serial.print("Unknown command: \"");
+        Serial.print((const char*)json["command"]);
+        Serial.println("\"");
+      }
+    }
+  }
+}
 
-  DeserializationError result = deserializeJson(json, message);
-  if (result != DeserializationError::Ok)
-  {
-    if (settings.use_serial) 
-    {
-      Serial.print("Error ocurred while deserializing json message \"");
-      Serial.print(message);
-      Serial.print("\": ");
-      Serial.println(result.c_str());
-    }
-  }
-  else
-  {
-    const char* target = json["target"];
-    if (c_strings_equal(target, "me"))
-    {
-      const char* command = json["command"];
-    }
-  }
+void turn_on()
+{
+  if (settings.use_serial) Serial.println("Setting state to on");
+  // Some digitalWrite code
+}
+
+void turn_off()
+{
+  if (settings.use_serial) Serial.println("Setting state to off");
+  // Some digitalWrite code
 }

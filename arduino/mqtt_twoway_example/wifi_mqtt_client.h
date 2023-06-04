@@ -4,7 +4,7 @@
 //   - Set additional board manager urls in settings to:
 //       https://arduino.esp8266.com/stable/package_esp8266com_index.json
 //       https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-//   - Install esp8266 boards through the board manager (contains a good WiFiClient.h)
+//   - Install esp8266 boards through the board manager (contains a good WiFiClient.h for arduinos)
 //   - Install ArduinoMqttClient through the library manager
 
 ///        ///
@@ -37,7 +37,7 @@ public: // Public methods
     const char *mqtt_broker_address, const uint16_t mqtt_broker_port = 1833,
     const bool use_serial = false,
     const uint32_t incoming_message_size_limit = 256,
-    const uint32_t wifi_retry_connect_delay_msecs = 8000, const uint32_t mqtt_retry_connect_delay_msecs = 8000
+    const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t mqtt_retry_connect_delay_msecs = 8000
   );
 
   void first_connect();
@@ -60,9 +60,9 @@ private: // Attributes
   const char *mqtt_broker_address;
   const uint16_t mqtt_broker_port;
   const bool use_serial;
-  const uint32_t wifi_retry_connect_delay_msecs;
-  const uint32_t mqtt_retry_connect_delay_msecs;
   const uint32_t incoming_message_size_limit;
+  const uint32_t wifi_connected_check_delay_msecs;
+  const uint32_t mqtt_retry_connect_delay_msecs;
 
   WiFiClient wifi_client;
   MqttClient mqtt_client = MqttClient(wifi_client);
@@ -85,19 +85,15 @@ WifiMqttClient::WifiMqttClient(
     const char *mqtt_broker_address, const uint16_t mqtt_broker_port,
     const bool use_serial,
     const uint32_t incoming_message_size_limit,
-    const uint32_t wifi_retry_connect_delay_msecs, const uint32_t mqtt_retry_connect_delay_msecs
+    const uint32_t wifi_connected_check_delay_msecs, const uint32_t mqtt_retry_connect_delay_msecs
 )
 : wifi_ssid(wifi_ssid), wifi_pass(wifi_pass),
   mqtt_broker_address(mqtt_broker_address), mqtt_broker_port(mqtt_broker_port),
   use_serial(use_serial),
   incoming_message_size_limit(incoming_message_size_limit),
-  wifi_retry_connect_delay_msecs(wifi_retry_connect_delay_msecs), mqtt_retry_connect_delay_msecs(mqtt_retry_connect_delay_msecs)
+  wifi_connected_check_delay_msecs(wifi_connected_check_delay_msecs), mqtt_retry_connect_delay_msecs(mqtt_retry_connect_delay_msecs)
 {
-  if (instance == nullptr)
-  {
-    if (use_serial) Serial.println(F("Error: Another WifiMqttClient instance is already active! Halting."));
-    while (true) {}
-  }
+  assert(instance == nullptr); // Ensure another WifiMqttClient instance is not already active
   instance = this;
 }
 
@@ -110,14 +106,14 @@ void WifiMqttClient::first_connect()
 void WifiMqttClient::reconnect_if_needed()
 {   
   // Check if wifi is still connected
-  if (!WiFi.status() != WL_CONNECTED)
+  if (WiFi.status() != WL_CONNECTED)
   {
     // Wifi was disconnected, try to reconnect
     connect_wifi();
   }
 
   // Check if the mqtt client is still connected
-  if (mqtt_client.connected())
+  if (!mqtt_client.connected())
   {
     mqtt_client.stop();
     connect_mqtt();
@@ -129,6 +125,8 @@ void WifiMqttClient::publish(String topic, String message)
     mqtt_client.beginMessage(topic);
     mqtt_client.print(message);
     mqtt_client.endMessage();
+
+    if (use_serial) Serial.println(F("Successfully published message"));
 }
 
 bool WifiMqttClient::is_on_message_set() const
@@ -165,23 +163,17 @@ void WifiMqttClient::connect_wifi()
       Serial.print(F("Connecting to wifi with SSID: "));
       Serial.println(wifi_ssid);
     }
-
-    if (WiFi.begin(wifi_ssid, wifi_pass) != WL_CONNECTED)
+    delay(1000);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(wifi_ssid, wifi_pass);
+    while(WiFi.status() != WL_CONNECTED)
     {
-      if (use_serial)
-      {
-        Serial.print(F("Failed to connect, retrying in "));
-        Serial.print(wifi_retry_connect_delay_msecs);
-        Serial.println(F("ms"));
-      }
-      delay(wifi_retry_connect_delay_msecs);
-      continue;
+      Serial.print(".");
+      delay(wifi_connected_check_delay_msecs);
     }
-    else
-    {
-      if (use_serial) Serial.println(F("Successfully connected to wifi"));
-      break;
-    }
+    Serial.println();
+    if (use_serial) Serial.println(F("Successfully connected to wifi"));
+    break;
   }
 }
 
@@ -230,10 +222,11 @@ WifiMqttClient *WifiMqttClient::instance = nullptr;
 // Callbacks //
 ///         ///
 
-void on_mqtt_message_internal_callback(int32_t message_size) {
+void on_mqtt_message_internal_callback(int32_t message_size)
+{
   WifiMqttClient *instance = WifiMqttClient::instance;
 
-  if (message_size >= instance->incoming_message_size_limit)
+  if ((uint32_t)message_size >= instance->incoming_message_size_limit)
   {
     if (instance->use_serial) Serial.println(F("Received mqtt message is too large, skipping"));
     return;

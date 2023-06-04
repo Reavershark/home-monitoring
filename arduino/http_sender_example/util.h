@@ -4,11 +4,6 @@
 #define byte char
 #define ubyte uchar
 
-bool c_strings_equal(const char *a, const char *b)
-{
-  return strcmp(a, b) == 0;
-}
-
 template<typename T>
 void run_in_interval_nonblocking(uint32_t *const state, const uint32_t interval_msecs, T func)
 {

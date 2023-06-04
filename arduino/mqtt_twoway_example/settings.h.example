@@ -7,10 +7,11 @@ public:
   const char *wifi_ssid = "myssid"; // (change this)
   const char *wifi_pass = "mypass"; // (change this)
   
-  // HTTP settings
-  const char *http_server_address = "192.168.0.2"; // (change this)
-  const long http_server_port = 8080; // (possibly change this)
-  const long send_interval_msecs = 10000;
+  // MQTT settings
+  const char *mqtt_broker_address = "192.168.0.2"; // (change this)
+  const uint16_t mqtt_broker_port = 1883;
+  const uint32_t publish_interval_msecs = 10000;
+  const size_t incoming_message_size_limit = 1024; // (possibly change this if you have insufficient or spare heap memory)
 
   // Serial settings
   const bool use_serial = false;

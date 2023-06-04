@@ -9,8 +9,8 @@ public:
   
   // HTTP settings
   const char *http_server_address = "192.168.0.2"; // (change this)
-  const long http_server_port = 8080; // (possibly change this)
-  const long send_interval_msecs = 10000;
+  const uint16_t http_server_port = 8080; // (possibly change this)
+  const uint32_t send_interval_msecs = 10000;
 
   // Serial settings
   const bool use_serial = false;
