@@ -1,8 +1,7 @@
 #pragma once
 
-#define uchar unsigned char
 #define byte char
-#define ubyte uchar
+#define ubyte unsigned char
 
 template<typename T>
 void run_in_interval_nonblocking(uint32_t *const state, const uint32_t interval_msecs, T func)
