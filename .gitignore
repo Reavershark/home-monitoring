@@ -9,6 +9,7 @@ custom_scripts.py
 
 # Arduino
 settings.h
+tft_setup.h
 
 # Temp files
 *.swp
