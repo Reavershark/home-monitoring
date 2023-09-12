@@ -38,32 +38,32 @@ def app():
         raise Exception(f"Missing environment variable: {e}")
 
 
-    #########################
-    # Setup influxdb client #
-    #########################
+    #############################
+    # Setup the influxdb client #
+    #############################
 
     client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
     client.ping()
     applog.info(f"Connected to InfluxDB at \"{INFLUXDB_URL}\"")
 
 
-    #######################################
-    # Run class and register_run function #
-    #######################################
-    
+    ###########################################
+    # The Job class and register_job function #
+    ###########################################
+
     @dataclass
-    class Run:
+    class Job:
         func: Callable[[dict], dict]
         interval: timedelta
-        
-    runs = []
-    def register_run(run: Run) -> None:
-        runs.append(run)
-    
 
-    ########################
-    # Run helper functions #
-    ########################
+    jobs = []
+    def register_job(job: Job) -> None:
+        jobs.append(job)
+
+
+    #####################################
+    # Helper functions for writing jobs #
+    #####################################
 
     def flux_query(query: str) -> TableList:
         query_api: QueryApi = client.query_api()
@@ -80,37 +80,37 @@ def app():
         except Exception as e:
             raise Exception(f"Failed to send a notification: {e}")
 
-    
+
     #################
     # Run functions #
     #################
 
-    applog.info("Registering runs functions...")
+    applog.info("Registering jobs...")
 
-    
-    # Example run description
-    def example_run(last_state: dict) -> dict:
-        runlog = applog.getChild("example_run")
-        runlog.info("Example run")
+
+    # Example job description
+    def example_job(last_state: dict) -> dict:
+        joblog = applog.getChild("example_job")
+        joblog.info("Example job")
 
         times_called = last_state.get("times_called", 0) + 1
-        runlog.info(f"Times called: {times_called}")
+        joblog.info(f"Times called: {times_called}")
 
         # Return a new state
         return {
             "times_called": times_called
         }
-    
-    #register_run(Run(
-    #    func=example_run,
+
+    #register_job(Job(
+    #    func=example_job,
     #    interval=timedelta(seconds=15)
     #))
-    
-    
-    # Example run 2 description
-    def example_run2(last_state: dict) -> dict:
-        runlog = applog.getChild("example_run2")
-        runlog.info("Example run 2")
+
+
+    # Example job 2 description
+    def example_job2(last_state: dict) -> dict:
+        joblog = applog.getChild("example_job2")
+        joblog.info("Example job 2")
 
         tables: TableList = flux_query("""
             from(bucket: "disk")
@@ -122,25 +122,25 @@ def app():
         assert len(tables) == 1, f"Expected one table, but got {len(tables)}"
         assert len(tables[0].records) >= 1, f"The table does not contain any records"
         record = tables[0].records[-1]
-        runlog.info(f"repr(record): {repr(record)}")
-        runlog.info(f"str(record): {str(record)}")
+        joblog.info(f"repr(record): {repr(record)}")
+        joblog.info(f"str(record): {str(record)}")
 
         # Don't save a state
         return {}
-    
-    #register_run(Run(
-    #    func=example_run2,
+
+    #register_job(Job(
+    #    func=example_job2,
     #    interval=timedelta(minutes=1)
     #))
 
-    
-    applog.info(f"Registered runs: {runs}")
+
+    applog.info(f"Registered jobs: {jobs}")
 
 
     ##############################
     # Main loop helper functions #
     ##############################
-    
+
     # load states from json file
     def load_states() -> dict[str, dict]:
         if not os.path.isdir("data"):
@@ -150,21 +150,19 @@ def app():
                 return json.load(f)
         else:
             return {}
-            
+
     # Save states to json file
     def save_states(states: dict[str, dict]) -> None:
-        
         if os.path.isfile("data/states.json"):
             shutil.copyfile("data/states.json", "data/states.json.backup-of-previous")
         with open("data/states.json", "w") as f:
             json.dump(states, f)
 
-            
-    # Init state for functions that don't have one
-    def init_missing_run_states(states: dict[str, dict]) -> None:
-        for run in runs:
-            if run.func.__name__ not in states:
-                states[run.func.__name__] = {}
+    # Init state for new jobs that don't have one yet
+    def init_missing_job_states(states: dict[str, dict]) -> None:
+        for job in jobs:
+            if job.func.__name__ not in states:
+                states[job.func.__name__] = {}
 
 
     #############
@@ -173,27 +171,26 @@ def app():
 
     applog.info("Preparing main loop...")
     states = load_states()
-    init_missing_run_states(states)
+    init_missing_job_states(states)
     save_states(states)
-    last_executed = [datetime.now() - timedelta(days=365) for run in runs]
+    last_executed = [datetime.now() - timedelta(days=365) for job in jobs]
 
     applog.info("Starting main loop...")
     while True:
         any_ran = False
-        for i in range(len(runs)):
-            if last_executed[i] + runs[i].interval < datetime.now():
+        for i in range(len(jobs)):
+            if last_executed[i] + jobs[i].interval < datetime.now():
+                job_name = jobs[i].func.__name__
+                last_executed[i] = datetime.now()
                 any_ran = True
 
-                run_name = runs[i].func.__name__
-                last_executed[i] = datetime.now()
-
-                applog.info(f"Starting run \"{run_name}\"")
+                applog.info(f"Starting job \"{job_name}\"")
                 try:
-                    states[run_name] = runs[i].func(states[run_name].copy())
-                    applog.info(f"Run \"{run_name}\" has finished")
+                    states[job_name] = jobs[i].func(states[job_name].copy())
+                    applog.info(f"Job \"{job_name}\" has finished")
                     save_states(states)
                 except Exception as e:
-                    applog.exception(f"Error in run \"{run_name}\": {e}")
+                    applog.exception(f"Error occurred in job \"{job_name}\": {e}")
 
         if not any_ran:
             time.sleep(0.1)
