@@ -16,17 +16,14 @@
 
 #include "settings.h" // Create by copying settings.h.example to settings.h and filling in the dummy values
 
-
 ///       ///
 // Globals //
 ///       ///
 
 WifiHttpClient client(
-  settings.wifi_ssid, settings.wifi_pass,
-  settings.http_server_address, settings.http_server_port,
-  settings.use_serial
-);
-
+    settings.wifi_ssid, settings.wifi_pass,
+    settings.http_server_address, settings.http_server_port,
+    settings.use_serial);
 
 ///                     ///
 // Function declarations //
@@ -36,19 +33,19 @@ void setup();
 void loop();
 void read_and_send_data();
 
-
 ///                    ///
 // Function definitions //
 ///                    ///
 
 void setup()
 {
-  if (settings.use_serial) Serial.begin(115200);
+  if (settings.use_serial)
+    Serial.begin(115200);
   client.first_connect();
 }
 
 void loop()
-{  
+{
   client.reconnect_if_needed();
 
   // Call read_and_send_data() every send_interval_msecs
@@ -71,13 +68,13 @@ void read_and_send_data()
   {
     // Create json object to send
     // Use https://arduinojson.org/v6/assistant to get the recommended static document size
-    // Example json: See readme file
+    // Example json: See project readme file
     StaticJsonDocument<192> json; // Gets destroyed when leaving this scope
 
+    json["bucket"] = "default";
     json["measurement"] = "water_depth";
     json["tags"]["location"] = "some_canal";
     json["fields"]["depth_in_meters"] = value;
-    json["bucket"] = "default";
 
     serializeJson(json, json_string);
   }

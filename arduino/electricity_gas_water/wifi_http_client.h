@@ -30,13 +30,13 @@ class WifiHttpClient
 {
 public: // Public methods
   /*
-   * If use_serial is true, it is assumed that Serial.begin(...) is called in setup().
+   * If use_debug_serial is true, it is assumed that Serial.begin(...) is called in setup().
    * The constructor does nothing but store its arguments.
    */
   WifiHttpClient(
       const char *wifi_ssid, const char *wifi_pass,
       const char *http_server_address, const uint16_t http_server_port,
-      const bool use_serial = false,
+      const bool use_debug_serial = false,
       const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t http_retry_connect_delay_msecs = 8000);
 
   void first_connect();
@@ -53,7 +53,7 @@ private: // Attributes
   const char *wifi_pass;
   const char *http_server_address;
   const uint16_t http_server_port;
-  const bool use_serial;
+  const bool use_debug_serial;
   const uint32_t wifi_connected_check_delay_msecs;
   const uint32_t http_retry_connect_delay_msecs;
 
@@ -67,11 +67,11 @@ private: // Attributes
 WifiHttpClient::WifiHttpClient(
     const char *wifi_ssid, const char *wifi_pass,
     const char *http_server_address, const uint16_t http_server_port,
-    const bool use_serial,
+    const bool use_debug_serial,
     const uint32_t wifi_connected_check_delay_msecs, const uint32_t http_retry_connect_delay_msecs)
     : wifi_ssid(wifi_ssid), wifi_pass(wifi_pass),
       http_server_address(http_server_address), http_server_port(http_server_port),
-      use_serial(use_serial),
+      use_debug_serial(use_debug_serial),
       wifi_connected_check_delay_msecs(wifi_connected_check_delay_msecs), http_retry_connect_delay_msecs(http_retry_connect_delay_msecs)
 {
 }
@@ -133,7 +133,7 @@ void WifiHttpClient::send_post(String path, String body)
 
   tcp_client.print(http_message);
 
-  if (use_serial)
+  if (use_debug_serial)
     Serial.println(F("Successfully sent HTTP POST"));
 }
 
@@ -145,7 +145,7 @@ void WifiHttpClient::connect_wifi()
 {
   while (true)
   {
-    if (use_serial)
+    if (use_debug_serial)
     {
       Serial.print(F("Connecting to wifi with SSID: "));
       Serial.println(wifi_ssid);
@@ -159,7 +159,7 @@ void WifiHttpClient::connect_wifi()
       delay(wifi_connected_check_delay_msecs);
     }
     Serial.println();
-    if (use_serial)
+    if (use_debug_serial)
       Serial.println(F("Successfully connected to wifi"));
     break;
   }
@@ -169,7 +169,7 @@ void WifiHttpClient::connect_tcp()
 {
   while (true)
   {
-    if (use_serial)
+    if (use_debug_serial)
     {
       Serial.print(F("Connecting to http server at http://"));
       Serial.print(http_server_address);
@@ -178,7 +178,7 @@ void WifiHttpClient::connect_tcp()
     }
     if (!tcp_client.connect(http_server_address, http_server_port))
     {
-      if (use_serial)
+      if (use_debug_serial)
       {
         Serial.print(F("Failed to connect, retrying in "));
         Serial.print(http_retry_connect_delay_msecs);
@@ -189,7 +189,7 @@ void WifiHttpClient::connect_tcp()
     }
     else
     {
-      if (use_serial)
+      if (use_debug_serial)
         Serial.println(F("Successfully connected to the http server"));
       break;
     }

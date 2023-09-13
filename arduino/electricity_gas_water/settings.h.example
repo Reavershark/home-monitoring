@@ -6,14 +6,11 @@ public:
   // Wifi settings
   const char *wifi_ssid = "myssid"; // (change this)
   const char *wifi_pass = "mypass"; // (change this)
-
+  
   // HTTP settings
   const char *http_server_address = "192.168.0.2"; // (change this)
   const uint16_t http_server_port = 8080; // (possibly change this)
   const uint32_t send_interval_msecs = 10000;
-
-  // Debug serial settings
-  const bool use_debug_serial = false;
 
   // DSMR P1 settings
   const int32_t dsmr_p1_uart_controller_index = 1;
@@ -22,7 +19,8 @@ public:
   const uint8_t dsmr_p1_unconnected_request_output_pin = 22;
   const uint32_t dsmr_p1_read_interval_msecs = 1000;
 
-  // Misc settings
+  // Debug settings
+  const bool use_debug_serial = false;
   const bool do_initial_wait = true;
   const bool show_sketch_version_on_display = true;
 };

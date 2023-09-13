@@ -4,11 +4,10 @@
 // Includes //
 ///        ///
 
-// DSMR P1 parser: https://github.com/matthijskooijman/arduino-dsmr 
+// DSMR P1 parser: https://github.com/matthijskooijman/arduino-dsmr
 #include "dsmr.h"
 
 #include "settings.h"
-
 
 ///                          ///
 // Setup the DSMR data struct //
@@ -42,39 +41,38 @@ namespace dsmr
 }
 
 using FluviusDSMRData = ParsedData<
-  identification, // String
-  timestamp, // String
-  electricity_threshold, // FixedValue 
-  meter_ID_electr, // String (MM 23-5-2023: added)
-  equipment_id, // String 
-  electricity_switch_position, // uint8_t 
-  electricity_tariff, // String 
-  current_Max, // uint16_t (MM 23-5-2023: added)
-  energy_delivered_tariff1, // FixedValue 
-  energy_delivered_tariff2, // FixedValue 
-  energy_returned_tariff1, // FixedValue 
-  energy_returned_tariff2, // FixedValue 
-  power_delivered, // FixedValue 
-  power_returned, // FixedValue 
-  message_long, // String 
-  voltage_l1, // FixedValue 
-  voltage_l2, // FixedValue 
-  voltage_l3, // FixedValue 
-  current_l1, // FixedValue 
-  current_l2, // FixedValue 
-  current_l3, // FixedValue 
-  power_delivered_l1, // FixedValue 
-  power_delivered_l2, // FixedValue 
-  power_delivered_l3, // FixedValue 
-  power_returned_l1, // FixedValue 
-  power_returned_l2, // FixedValue 
-  power_returned_l3, // FixedValue 
-  gas_device_type, // uint16_t 
-  gas_valve_position, // uint8_t 
-  meter_ID_gas, // String (MM 23-5-2023: added)
-  gas_m3 // TimestampedFixedValue (MM 23-5-2023: added)
->;
-
+    identification,              // String
+    timestamp,                   // String
+    electricity_threshold,       // FixedValue
+    meter_ID_electr,             // String (MM 23-5-2023: added)
+    equipment_id,                // String
+    electricity_switch_position, // uint8_t
+    electricity_tariff,          // String
+    current_Max,                 // uint16_t (MM 23-5-2023: added)
+    energy_delivered_tariff1,    // FixedValue
+    energy_delivered_tariff2,    // FixedValue
+    energy_returned_tariff1,     // FixedValue
+    energy_returned_tariff2,     // FixedValue
+    power_delivered,             // FixedValue
+    power_returned,              // FixedValue
+    message_long,                // String
+    voltage_l1,                  // FixedValue
+    voltage_l2,                  // FixedValue
+    voltage_l3,                  // FixedValue
+    current_l1,                  // uint16_t
+    current_l2,                  // uint16_t
+    current_l3,                  // uint16_t
+    power_delivered_l1,          // FixedValue
+    power_delivered_l2,          // FixedValue
+    power_delivered_l3,          // FixedValue
+    power_returned_l1,           // FixedValue
+    power_returned_l2,           // FixedValue
+    power_returned_l3,           // FixedValue
+    gas_device_type,             // uint16_t
+    gas_valve_position,          // uint8_t
+    meter_ID_gas,                // String (MM 23-5-2023: added)
+    gas_m3                       // TimestampedFixedValue (MM 23-5-2023: added)
+    >;
 
 ///                 ///
 // Class declaration //
@@ -99,7 +97,6 @@ private:
   void (*on_message_callback)(FluviusDSMRData &message) = nullptr;
 };
 
-
 ///                                   ///
 // Public class method implementations //
 ///                                   ///
@@ -122,15 +119,17 @@ void FluviusDSMRWrapper::set_on_message_callback(void (*on_message_callback)(Flu
 
 void FluviusDSMRWrapper::process_incoming_data()
 {
-  assert(is_initialized); // Ensure init() was called
+  assert(is_initialized);                 // Ensure init() was called
   assert(on_message_callback != nullptr); // Ensure on_message_callback was set
 
   // MM: timing per Fluvius telegram: uart reading 62 ms + parsing 1 ms
 
   dsmr_p1_reader.loop(); // Processes any new data in the uart stream, then returns
 
-  auto handle_parser_error = [](String &err) {
-    if (settings.use_debug_serial) Serial.println(err);
+  auto handle_parser_error = [](String &err)
+  {
+    if (settings.use_debug_serial)
+      Serial.println(err);
 
     // NOTE: harlmess, but for some unclear reason: 1st time the parser is called, it always detects this fault on the 2nd OBIS field:
     // > 0-0:96.1.4(50217)
@@ -149,7 +148,7 @@ void FluviusDSMRWrapper::process_incoming_data()
     {
       on_message_callback(message);
     }
-    else 
+    else
     {
       handle_parser_error(error);
     }
@@ -158,18 +157,22 @@ void FluviusDSMRWrapper::process_incoming_data()
 
 void FluviusDSMRWrapper::trigger_read()
 {
-    dsmr_p1_reader.enable(true);
+  dsmr_p1_reader.enable(true);
 }
 
-#define print_val(str, val) Serial.print(str ": "); Serial.println(val)
-#define print_val_float(str, val, precision) Serial.print(str ": "); Serial.println(val, precision)
+#define print_val(str, val) \
+  Serial.print(str ": ");   \
+  Serial.println(val)
+#define print_val_float(str, val, precision) \
+  Serial.print(str ": ");                    \
+  Serial.println(val, precision)
 
 void FluviusDSMRWrapper::print_dsmr_values(FluviusDSMRData &data)
 {
   assert(is_initialized); // Ensure init() was called
 
   // This prints the raw input (full telegram), for debugging purposes
-  //Serial.println(raw);
+  // Serial.println(raw);
 
   Serial.println("DSMR Parsing result (relevant fields):");
 
@@ -195,7 +198,7 @@ void FluviusDSMRWrapper::print_dsmr_values(FluviusDSMRData &data)
   print_val_float("power_returned_l3  (kWh)", data.power_returned_l3, 3);
 
   print_val("Gas timestamp", data.gas_m3.timestamp); // TimestampedFixedValue::timestamp
-  print_val_float("gas_m3", data.gas_m3, 3); // TimestampedFixedValue, default casts to float
+  print_val_float("gas_m3", data.gas_m3, 3);         // TimestampedFixedValue, default casts to float
 
   Serial.println();
 }

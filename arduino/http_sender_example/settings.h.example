@@ -17,4 +17,3 @@ public:
 };
 
 Settings settings;
-

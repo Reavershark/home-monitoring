@@ -12,7 +12,6 @@
 #include <TFT_eSPI.h>
 #include <SPI.h>
 
-
 ///                 ///
 // Class declaration //
 ///                 ///
@@ -20,15 +19,14 @@
 class TftDisplayWrapper
 {
 public:
-    void init();
-    void draw_sketch_version(const String &version_stamp);
-    void draw_metrics(const int32_t &power_consumption, const int64_t &teller_stand_water);
+  void init();
+  void draw_sketch_version(const String &version_stamp);
+  void draw_metrics(const int32_t &power_consumption, const int32_t &teller_stand_water, const String &wifi_ssid);
 
 private:
-    bool is_initialized = false;
-    TFT_eSPI tft;
+  bool is_initialized = false;
+  TFT_eSPI tft;
 };
-
 
 ///                                   ///
 // Public class method implementations //
@@ -53,17 +51,17 @@ void TftDisplayWrapper::draw_sketch_version(const String &version_stamp)
 
   tft.setTextSize(1);
 
-  tft.setTextColor(TFT_GREEN, TFT_BLACK); 
+  tft.setTextColor(TFT_GREEN, TFT_BLACK);
   tft.drawString(String("Sketch version : ") + version_stamp, 0, 0, 4);
 
   tft.setTextColor(TFT_RED, TFT_BLACK);
-  tft.drawString(String("Compiled: ") + String(__DATE__) + String(", ") + String( __TIME__), 0, 48, 4);
+  tft.drawString(String("Compiled: ") + String(__DATE__) + String(", ") + String(__TIME__), 0, 48, 4);
 
   tft.setTextColor(TFT_RED, TFT_BLACK);
   tft.drawString(String(" IDE version: ") + String(__VERSION__), 0, 96, 4);
 }
 
-void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const int64_t &teller_stand_water)
+void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const int32_t &teller_stand_water, const String &wifi_ssid)
 {
   assert(is_initialized); // Ensure init() was called
 
@@ -71,16 +69,20 @@ void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const int
 
   tft.setTextSize(2);
   tft.setTextColor(power_consumption > 0 ? TFT_RED : TFT_GREEN, TFT_BLACK);
-  tft.drawString(String(power_consumption), 10, 30, 4);
+  tft.drawString(String("P=") + String(power_consumption), 10, 30, 4);
 
   tft.setTextSize(2);
-  tft.setTextColor(TFT_BLUE, TFT_BLACK); 
-  tft.drawString(String(teller_stand_water), 10, 80, 4);
+  tft.setTextColor(TFT_BLUE, TFT_BLACK);
+  tft.drawString(String("W=") + String(teller_stand_water), 10, 80, 4);
 
-  //tft.setTextSize(1);
-  //tft.setTextColor(TFT_BLUE, TFT_BLACK); 
-  //tft.drawString( "    3", 30, 80, 4); // cubic symbol 
-  //tft.drawString( "m   x 100   GAS", 30, 99, 4);
+  tft.setTextSize(2);
+  tft.setTextColor(TFT_BLUE, TFT_WHITE);
+  tft.drawString(String("SSID=") + String(wifi_ssid), 10, 130, 4);
 
-  //tft.drawString(String(TellerStandGas_delta) + String("   Delta/min"), 40, 80, 4);
+  // tft.setTextSize(1);
+  // tft.setTextColor(TFT_BLUE, TFT_BLACK);
+  // tft.drawString( "    3", 30, 80, 4); // cubic symbol
+  // tft.drawString( "m   x 100   GAS", 30, 99, 4);
+
+  // tft.drawString(String(TellerStandGas_delta) + String("   Delta/min"), 40, 80, 4);
 }
