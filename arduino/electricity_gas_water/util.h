@@ -27,3 +27,5 @@ void run_in_interval_nonblocking(uint32_t *const state, const uint32_t interval_
     func();
   }
 }
+
+#define fixed_value_to_json_float(fixed_value) serialized(String(fixed_value.val(), 3))

@@ -37,7 +37,7 @@ public: // Public methods
       const char *wifi_ssid, const char *wifi_pass,
       const char *http_server_address, const uint16_t http_server_port,
       const bool use_debug_serial = false,
-      const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t http_retry_connect_delay_msecs = 8000);
+      const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t http_retry_connect_delay_msecs = 2000);
 
   void first_connect();
   void reconnect_if_needed();
@@ -79,7 +79,6 @@ WifiHttpClient::WifiHttpClient(
 void WifiHttpClient::first_connect()
 {
   connect_wifi();
-  connect_tcp();
 }
 
 void WifiHttpClient::reconnect_if_needed()
@@ -88,42 +87,38 @@ void WifiHttpClient::reconnect_if_needed()
   if (WiFi.status() != WL_CONNECTED)
   {
     // Wifi was disconnected, try to reconnect
+    if (use_debug_serial) Serial.println(F("Wifi was disconnected, reconnecting..."));
     connect_wifi();
   }
 
-  // Read and discard any available data
-  int available;
-  while ((available = tcp_client.available()) >= 1)
-  {
-    if (available >= 16)
-    {
-      ubyte buffer[16];
-      tcp_client.read(buffer, sizeof(buffer));
-    }
-    else
-    {
-      tcp_client.read();
-    }
-  }
+  // Discard any available data
+  tcp_client.flush();
 
   // Check if the tcp client is still connected
   if (!tcp_client.connected())
   {
-    // The tcp session was closed, try to reconnect
+    // The tcp session was closed
+    if (use_debug_serial) Serial.println(F("The tcp session closed"));
     tcp_client.stop();
-    connect_tcp();
   }
 }
 
 void WifiHttpClient::send_post(String path, String body)
 {
+  if (tcp_client.connected())
+  {
+    tcp_client.flush();
+    tcp_client.stop();
+  }
+  connect_tcp();
+  
   String http_message;
 
   http_message += String(F("POST ")) + path + String(F(" HTTP/1.1\n"));
 
   // Headers
   http_message += String(F("Host: ")) + String(http_server_address) + String(F("\n"));
-  http_message += String(F("Connection: keep-alive\n"));
+  http_message += String(F("Connection: close\n"));
   if (body.length() > 0)
     http_message += String("Content-Length: ") + String(body.length()) + String(F("\n"));
   http_message += String(F("\n")); // Indicate end of headers with an empty line

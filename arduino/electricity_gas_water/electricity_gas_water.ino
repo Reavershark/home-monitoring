@@ -14,6 +14,7 @@
 //   - 1.1.0: Extended with Water meter: reed contact on pin XX (13 or 27), with internal pullup  (gives pulse every 0.5 liter)
 //   - 1.2.0: Large refactor
 //   - 1.3.0: Send measurements to home-monitoring collector over http
+static const String sketch_name = "electricity_gas_water";
 static const String version_stamp = "1.3.0";
 
 ///        ///
@@ -49,6 +50,7 @@ uint32_t power_consumption = 0; // in Wh
 void setup();
 void loop();
 void on_dsmr_message_callback(FluviusDSMRData &message);
+void send_heartbeat();
 
 ///                    ///
 // Function definitions //
@@ -93,16 +95,23 @@ void loop()
 
   // Call dsmr_wrapper.trigger_read() every dsmr_p1_read_interval_msecs
   {
-    static uint32_t run_trigger_read_state = 0;
-    run_in_interval_nonblocking(&run_trigger_read_state, settings.dsmr_p1_read_interval_msecs, []()
+    static uint32_t rii_dsmr_wrapper_trigger_read_state = 0;
+    run_in_interval_nonblocking(&rii_dsmr_wrapper_trigger_read_state, settings.dsmr_p1_read_interval_msecs, []()
                                 { dsmr_wrapper.trigger_read(); });
   }
 
   // Call display_wrapper.draw_metrics() every second
   {
-    static uint32_t run_display_draw_metrics_state = 0;
-    run_in_interval_nonblocking(&run_display_draw_metrics_state, 1000, []()
+    static uint32_t rii_display_wrapper_draw_metrics_state = 0;
+    run_in_interval_nonblocking(&rii_display_wrapper_draw_metrics_state, 1000, []()
                                 { display_wrapper.draw_metrics(power_consumption, 0, String(settings.wifi_ssid)); });
+  }
+
+  // Call send_heartbeat() every 30 seconds
+  {
+    static uint32_t rii_heartbeat_read_state = 0;
+    run_in_interval_nonblocking(&rii_heartbeat_read_state, 30000, []()
+                                { send_heartbeat(); });
   }
 }
 
@@ -124,37 +133,44 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
       // Example json: See project readme file
       StaticJsonDocument<768> json; // Gets destroyed when leaving this scope
 
+      // Influxdb-specific
       json["bucket"] = "fluvius_smart_meter";
       json["measurement"] = "fluvius_smart_meter_electricity";
 
-      json["tags"]["identification"] = message.identification;  // String
-      json["fields"]["original_timestamp"] = message.timestamp; // String
+      // Metadata (general)
+      json["tags"]["original_timestamp"] = message.timestamp;  // String
+      json["tags"]["identification"] = message.identification; // String
+      json["tags"]["equipment_id"] = message.equipment_id;     // String
+      json["tags"]["message_long"] = message.message_long;     // String
 
-      json["fields"]["electricity_threshold"] = message.electricity_threshold.val();       // FixedValue
-      json["fields"]["meter_ID_electr"] = message.meter_ID_electr;                         // String (MM 23-5-2023: added)
-      json["fields"]["equipment_id"] = message.equipment_id;                               // String
-      json["fields"]["electricity_switch_position"] = message.electricity_switch_position; // uint8_t
-      json["fields"]["electricity_tariff"] = message.electricity_tariff;                   // String
-      json["fields"]["current_Max"] = message.current_Max;                                 // uint16_t (MM 23-5-2023: added)
-      json["fields"]["energy_delivered_tariff1"] = message.energy_delivered_tariff1.val(); // FixedValue
-      json["fields"]["energy_delivered_tariff2"] = message.energy_delivered_tariff2.val(); // FixedValue
-      json["fields"]["energy_returned_tariff1"] = message.energy_returned_tariff1.val();   // FixedValue
-      json["fields"]["energy_returned_tariff2"] = message.energy_returned_tariff2.val();   // FixedValue
-      json["fields"]["power_delivered"] = message.power_delivered.val();                   // FixedValue
-      json["fields"]["power_returned"] = message.power_returned.val();                     // FixedValue
-      json["fields"]["message_long"] = message.message_long;                               // String
-      json["fields"]["voltage_l1"] = message.voltage_l1.val();                             // FixedValue
-      json["fields"]["voltage_l2"] = message.voltage_l2.val();                             // FixedValue
-      json["fields"]["voltage_l3"] = message.voltage_l3.val();                             // FixedValue
-      json["fields"]["current_l1"] = message.current_l1;                                   // uint16_t
-      json["fields"]["current_l2"] = message.current_l2;                                   // uint16_t
-      json["fields"]["current_l3"] = message.current_l3;                                   // uint16_t
-      json["fields"]["power_delivered_l1"] = message.power_delivered_l1.val();             // FixedValue
-      json["fields"]["power_delivered_l2"] = message.power_delivered_l2.val();             // FixedValue
-      json["fields"]["power_delivered_l3"] = message.power_delivered_l3.val();             // FixedValue
-      json["fields"]["power_returned_l1"] = message.power_returned_l1.val();               // FixedValue
-      json["fields"]["power_returned_l2"] = message.power_returned_l2.val();               // FixedValue
-      json["fields"]["power_returned_l3"] = message.power_returned_l3.val();               // FixedValue
+      // Metadata (electricity-specific)
+      json["tags"]["meter_id_electr"] = message.meter_id_electr;                                          // String (MM 23-5-2023: added)
+      json["fields"]["electricity_switch_position"] = message.electricity_switch_position;                // uint8_t
+      json["fields"]["electricity_threshold"] = fixed_value_to_json_float(message.electricity_threshold); // FixedValue
+      json["fields"]["current_max"] = message.current_max;                                                // uint16_t (MM 23-5-2023: added)
+
+      // Electricity aggregates
+      json["fields"]["electricity_tariff"] = message.electricity_tariff;                                        // String
+      json["fields"]["energy_delivered_tariff1"] = fixed_value_to_json_float(message.energy_delivered_tariff1); // FixedValue
+      json["fields"]["energy_delivered_tariff2"] = fixed_value_to_json_float(message.energy_delivered_tariff2); // FixedValue
+      json["fields"]["energy_returned_tariff1"] = fixed_value_to_json_float(message.energy_returned_tariff1);   // FixedValue
+      json["fields"]["energy_returned_tariff2"] = fixed_value_to_json_float(message.energy_returned_tariff2);   // FixedValue
+
+      // Electricity live values
+      json["fields"]["power_delivered"] = fixed_value_to_json_float(message.power_delivered);       // FixedValue
+      json["fields"]["power_delivered_l1"] = fixed_value_to_json_float(message.power_delivered_l1); // FixedValue
+      json["fields"]["power_delivered_l2"] = fixed_value_to_json_float(message.power_delivered_l2); // FixedValue
+      json["fields"]["power_delivered_l3"] = fixed_value_to_json_float(message.power_delivered_l3); // FixedValue
+      json["fields"]["power_returned"] = fixed_value_to_json_float(message.power_returned);         // FixedValue
+      json["fields"]["power_returned_l1"] = fixed_value_to_json_float(message.power_returned_l1);   // FixedValue
+      json["fields"]["power_returned_l2"] = fixed_value_to_json_float(message.power_returned_l2);   // FixedValue
+      json["fields"]["power_returned_l3"] = fixed_value_to_json_float(message.power_returned_l3);   // FixedValue
+      json["fields"]["voltage_l1"] = fixed_value_to_json_float(message.voltage_l1);                 // FixedValue
+      json["fields"]["voltage_l2"] = fixed_value_to_json_float(message.voltage_l2);                 // FixedValue
+      json["fields"]["voltage_l3"] = fixed_value_to_json_float(message.voltage_l3);                 // FixedValue
+      json["fields"]["current_l1"] = fixed_value_to_json_float(message.current_l1_redef);           // FixedValue
+      json["fields"]["current_l2"] = fixed_value_to_json_float(message.current_l2_redef);           // FixedValue
+      json["fields"]["current_l3"] = fixed_value_to_json_float(message.current_l3_redef);           // FixedValue
 
       serializeJson(json, json_string);
     }
@@ -171,23 +187,50 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
       // Example json: See project readme file
       StaticJsonDocument<384> json; // Gets destroyed when leaving this scope
 
+      // Influxdb-specific
       json["bucket"] = "fluvius_smart_meter";
       json["measurement"] = "fluvius_smart_meter_gas";
 
-      json["tags"]["identification"] = message.identification;         // String
-      json["tags"]["equipment_id"] = message.equipment_id;             // String
-      json["tags"]["gas_device_type"] = message.gas_device_type;       // uint16_t
-      json["tags"]["gas_valve_position"] = message.gas_valve_position; // uint8_t
-      json["tags"]["meter_ID_gas"] = message.meter_ID_gas;             // String (MM 23-5-2023: added)
+      // Metadata (general)
+      json["tags"]["original_timestamp"] = message.timestamp;  // String
+      json["tags"]["identification"] = message.identification; // String
+      json["tags"]["equipment_id"] = message.equipment_id;     // String
+      json["tags"]["message_long"] = message.message_long;     // String
+      
+      // Metadata (gas-specific)
+      json["tags"]["meter_ID_gas"] = message.meter_id_gas;                  // String (MM 23-5-2023: added)
+      json["tags"]["gas_device_type"] = String(message.gas_device_type);    // uint16_t
+      json["fields"]["gas_valve_position"] = message.gas_valve_position;    // uint8_t
+      json["tags"]["gas_m3_original_timestamp"] = message.gas_m3.timestamp; // String
 
-      json["fields"]["original_timestamp"] = message.timestamp; // String
-      json["fields"]["message_long"] = message.message_long;    // String
-
-      json["fields"]["gas_m3"] = message.gas_m3.val();                        // TimestampedFixedValue (MM 23-5-2023: added)
-      json["fields"]["gas_m3_original_timestamp"] = message.gas_m3.timestamp; // String
+      json["fields"]["gas_m3"] = message.gas_m3.val(); // TimestampedFixedValue (MM 23-5-2023: added)
 
       serializeJson(json, json_string);
     }
     wifi_http_client.send_post("/", json_string);
   }
+}
+
+void send_heartbeat()
+{
+  if (settings.use_debug_serial)
+    Serial.println("Sending heartbeat");
+
+  // Construct a json string to send over HTTP
+  String json_string;
+  {
+    // Create json object to send
+    // Use https://arduinojson.org/v6/assistant to get the recommended static document size
+    StaticJsonDocument<192> json; // Gets destroyed when leaving this scope
+
+    json["bucket"] = "heartbeat";
+    json["measurement"] = "heartbeat";
+    json["tags"]["device"] = settings.device_identifier;
+    json["tags"]["software"] = sketch_name + String(" Arduino sketch");
+    json["tags"]["software_version"] = version_stamp;
+    json["fields"]["healthy"] = 1;
+
+    serializeJson(json, json_string);
+  }
+  wifi_http_client.send_post("/", json_string);
 }

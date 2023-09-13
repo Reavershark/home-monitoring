@@ -3,6 +3,9 @@
 struct Settings
 {
 public:
+  // General settings
+  const String device_identifier = "esp-32 garage";
+
   // Wifi settings
   const char *wifi_ssid = "myssid"; // (change this)
   const char *wifi_pass = "mypass"; // (change this)
@@ -10,7 +13,6 @@ public:
   // HTTP settings
   const char *http_server_address = "192.168.0.2"; // (change this)
   const uint16_t http_server_port = 8080; // (possibly change this)
-  const uint32_t send_interval_msecs = 10000;
 
   // DSMR P1 settings
   const int32_t dsmr_p1_uart_controller_index = 1;

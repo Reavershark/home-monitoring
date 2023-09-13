@@ -38,6 +38,8 @@ void TftDisplayWrapper::init()
 
   tft.init();
   tft.setRotation(3); // 3 = upside-down
+
+  is_initialized = true;
 }
 
 // Some tft method signatures:
@@ -67,17 +69,17 @@ void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const int
 
   tft.fillScreen(TFT_BLACK);
 
-  tft.setTextSize(2);
+  tft.setTextSize(1);
   tft.setTextColor(power_consumption > 0 ? TFT_RED : TFT_GREEN, TFT_BLACK);
-  tft.drawString(String("P=") + String(power_consumption), 10, 30, 4);
+  tft.drawString(String("PCons=") + String(power_consumption), 10, 10, 4);
 
-  tft.setTextSize(2);
+  tft.setTextSize(1);
   tft.setTextColor(TFT_BLUE, TFT_BLACK);
-  tft.drawString(String("W=") + String(teller_stand_water), 10, 80, 4);
+  tft.drawString(String("Water=") + String(teller_stand_water), 10, 40, 4);
 
-  tft.setTextSize(2);
-  tft.setTextColor(TFT_BLUE, TFT_WHITE);
-  tft.drawString(String("SSID=") + String(wifi_ssid), 10, 130, 4);
+  tft.setTextSize(1);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.drawString(String("SSID=") + String(wifi_ssid), 10, 100, 4);
 
   // tft.setTextSize(1);
   // tft.setTextColor(TFT_BLUE, TFT_BLACK);
