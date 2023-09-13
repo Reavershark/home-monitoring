@@ -72,7 +72,7 @@ def message_queue_processor_thread_entrypoint(message_queue: Queue):
 
                         if "bucket" in msg:
                             assert type(msg["bucket"]) == str, "The provided optional field \"buckket\" is not a string"
-                    except AssertError as e:
+                    except AssertionError as e:
                         logging.warning(f"Validation failed for message \"{msg_str}\": {str(e)}")
                         continue
 
