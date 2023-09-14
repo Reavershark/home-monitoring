@@ -39,6 +39,8 @@ services:
       DOCKER_INFLUXDB_INIT_ORG: "${INFLUXDB_ORG}"
       DOCKER_INFLUXDB_INIT_BUCKET: "default"
       INFLUXD_SESSION_LENGTH: "73634400" # Influx login session length in minutes (20 years)
+      INFLUXDB_DATA_INDEX_VERSION: "tsi1"
+
     ports:
       - "8086:8086" # http (gui/api)
     volumes:
@@ -118,3 +120,28 @@ services:
       - "influxdb"
       - "mqtt-broker"
       - "apprise"
+
+  # Dashboarding web app
+  grafana: # http on port 3000 (gui)
+    image: "grafana/grafana-oss:10.1.1-ubuntu"
+    restart: "always"
+    environment:
+      GF_FEATURE_TOGGLES_ENABLE: "correlations,timeSeriesTable,exploreScrollableLogsContainer,vizAndWidgetSplit,featureToggleAdminPage"
+      GF_DATE_FORMATS_USE_BROWSER_LOCALE: "true"
+      #GF_DATE_FORMATS_FULL_DATE: "DD/MM/YYYY HH:mm:ss"
+      #GF_DATE_FORMATS_INTERVAL_SECOND: "HH:mm:ss"
+      #GF_DATE_FORMATS_INTERVAL_MINUTE: "HH:mm"
+      #GF_DATE_FORMATS_INTERVAL_HOUR =: "DD/MM HH:mm"
+      #GF_DATE_FORMATS_INTERVAL_DAY: "DD/MM"
+      #GF_DATE_FORMATS_INTERVAL_MONTH: "MM/YYYY"
+      #GF_DATE_FORMATS_INTERVAL_YEAR: "YYYY"
+    ports:
+      - "3000:3000" # http (gui)
+    volumes:
+      - "./docker-compose-volumes/grafana/data/:/var/lib/grafana/"
+    user: "1000"
+    healthcheck:
+      test: "curl --fail -s http://localhost:3000/api/health || exit 1"
+      interval: 5s
+      timeout: 10s
+      retries: 5

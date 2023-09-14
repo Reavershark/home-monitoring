@@ -81,9 +81,9 @@ def app():
             raise Exception(f"Failed to send a notification: {e}")
 
 
-    #################
-    # Run functions #
-    #################
+    ###############
+    # Define jobs #
+    ###############
 
     applog.info("Registering jobs...")
 
