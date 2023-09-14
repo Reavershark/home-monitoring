@@ -120,7 +120,7 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
   if (settings.use_debug_serial)
     dsmr_wrapper.print_dsmr_values(message);
 
-  // Store power consumption in Wh (original is kWh) for Display
+  // Store power consumption in W (original is Wh) for Display
   power_consumption = (message.power_delivered - message.power_returned) * 1000;
 
   // Send electricity measurement
@@ -138,19 +138,18 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
       json["measurement"] = "fluvius_smart_meter_electricity";
 
       // Metadata (general)
-      json["tags"]["original_timestamp"] = message.timestamp;  // String
       json["tags"]["identification"] = message.identification; // String
       json["tags"]["equipment_id"] = message.equipment_id;     // String
-      json["tags"]["message_long"] = message.message_long;     // String
+      json["fields"]["message_long"] = message.message_long;   // String
 
       // Metadata (electricity-specific)
       json["tags"]["meter_id_electr"] = message.meter_id_electr;                                          // String (MM 23-5-2023: added)
       json["fields"]["electricity_switch_position"] = message.electricity_switch_position;                // uint8_t
       json["fields"]["electricity_threshold"] = fixed_value_to_json_float(message.electricity_threshold); // FixedValue
       json["fields"]["current_max"] = message.current_max;                                                // uint16_t (MM 23-5-2023: added)
+      json["fields"]["electricity_tariff"] = message.electricity_tariff;                                  // String
 
       // Electricity aggregates
-      json["fields"]["electricity_tariff"] = message.electricity_tariff;                                        // String
       json["fields"]["energy_delivered_tariff1"] = fixed_value_to_json_float(message.energy_delivered_tariff1); // FixedValue
       json["fields"]["energy_delivered_tariff2"] = fixed_value_to_json_float(message.energy_delivered_tariff2); // FixedValue
       json["fields"]["energy_returned_tariff1"] = fixed_value_to_json_float(message.energy_returned_tariff1);   // FixedValue
@@ -192,18 +191,17 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
       json["measurement"] = "fluvius_smart_meter_gas";
 
       // Metadata (general)
-      json["tags"]["original_timestamp"] = message.timestamp;  // String
       json["tags"]["identification"] = message.identification; // String
       json["tags"]["equipment_id"] = message.equipment_id;     // String
-      json["tags"]["message_long"] = message.message_long;     // String
+      json["fields"]["message_long"] = message.message_long;   // String
       
       // Metadata (gas-specific)
-      json["tags"]["meter_ID_gas"] = message.meter_id_gas;                  // String (MM 23-5-2023: added)
-      json["tags"]["gas_device_type"] = String(message.gas_device_type);    // uint16_t
-      json["fields"]["gas_valve_position"] = message.gas_valve_position;    // uint8_t
-      json["tags"]["gas_m3_original_timestamp"] = message.gas_m3.timestamp; // String
+      json["tags"]["meter_id_gas"] = message.meter_id_gas;                 // String (MM 23-5-2023: added)
+      json["fields"]["gas_device_type"] = String(message.gas_device_type); // uint16_t
+      json["fields"]["gas_valve_position"] = message.gas_valve_position;   // uint8_t
 
-      json["fields"]["gas_m3"] = message.gas_m3.val(); // TimestampedFixedValue (MM 23-5-2023: added)
+      // Gas live values
+      json["fields"]["gas_m3"] = fixed_value_to_json_float(message.gas_m3); // TimestampedFixedValue (MM 23-5-2023: added)
 
       serializeJson(json, json_string);
     }
@@ -226,8 +224,8 @@ void send_heartbeat()
     json["bucket"] = "heartbeat";
     json["measurement"] = "heartbeat";
     json["tags"]["device"] = settings.device_identifier;
-    json["tags"]["software"] = sketch_name + String(" Arduino sketch");
-    json["tags"]["software_version"] = version_stamp;
+    json["fields"]["software"] = sketch_name + String(" Arduino sketch");
+    json["fields"]["software_version"] = version_stamp;
     json["fields"]["healthy"] = 1;
 
     serializeJson(json, json_string);
