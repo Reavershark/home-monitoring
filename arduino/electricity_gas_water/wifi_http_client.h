@@ -37,7 +37,7 @@ public: // Public methods
       const char *wifi_ssid, const char *wifi_pass,
       const char *http_server_address, const uint16_t http_server_port,
       const bool use_debug_serial = false,
-      const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t http_retry_connect_delay_msecs = 2000);
+      const uint32_t wifi_connected_check_delay_msecs = 1000, const uint32_t wifi_connected_check_times = 5);
 
   void first_connect();
   void reconnect_if_needed();
@@ -45,8 +45,8 @@ public: // Public methods
   void send_post(String path, String body);
 
 private: // Private methods
-  void connect_wifi();
-  void connect_tcp();
+  bool connect_wifi();
+  bool connect_tcp();
 
 private: // Attributes
   const char *wifi_ssid;
@@ -55,7 +55,7 @@ private: // Attributes
   const uint16_t http_server_port;
   const bool use_debug_serial;
   const uint32_t wifi_connected_check_delay_msecs;
-  const uint32_t http_retry_connect_delay_msecs;
+  const uint32_t wifi_connected_check_times;
 
   WiFiClient tcp_client;
 };
@@ -68,11 +68,11 @@ WifiHttpClient::WifiHttpClient(
     const char *wifi_ssid, const char *wifi_pass,
     const char *http_server_address, const uint16_t http_server_port,
     const bool use_debug_serial,
-    const uint32_t wifi_connected_check_delay_msecs, const uint32_t http_retry_connect_delay_msecs)
+    const uint32_t wifi_connected_check_delay_msecs, const uint32_t wifi_connected_check_times)
     : wifi_ssid(wifi_ssid), wifi_pass(wifi_pass),
       http_server_address(http_server_address), http_server_port(http_server_port),
       use_debug_serial(use_debug_serial),
-      wifi_connected_check_delay_msecs(wifi_connected_check_delay_msecs), http_retry_connect_delay_msecs(http_retry_connect_delay_msecs)
+      wifi_connected_check_delay_msecs(wifi_connected_check_delay_msecs), wifi_connected_check_times(wifi_connected_check_times)
 {
 }
 
@@ -136,7 +136,7 @@ void WifiHttpClient::send_post(String path, String body)
 // Private class method implementations //
 ///                                    ///
 
-void WifiHttpClient::connect_wifi()
+bool WifiHttpClient::connect_wifi()
 {
   while (true)
   {
@@ -145,11 +145,18 @@ void WifiHttpClient::connect_wifi()
       Serial.print(F("Connecting to wifi with SSID: "));
       Serial.println(wifi_ssid);
     }
-    delay(1000);
     WiFi.mode(WIFI_STA);
     WiFi.begin(wifi_ssid, wifi_pass);
+    int32_t i = 0;
     while (WiFi.status() != WL_CONNECTED)
     {
+      if (i >= wifi_connected_check_times)
+      {
+        if (use_debug_serial)
+          Serial.println(F("Failed to connect to wifi"));
+        return false;
+      }
+      i++;
       Serial.print(".");
       delay(wifi_connected_check_delay_msecs);
     }
@@ -160,33 +167,26 @@ void WifiHttpClient::connect_wifi()
   }
 }
 
-void WifiHttpClient::connect_tcp()
+bool WifiHttpClient::connect_tcp()
 {
-  while (true)
+  if (use_debug_serial)
+  {
+    Serial.print(F("Connecting to http server at http://"));
+    Serial.print(http_server_address);
+    Serial.print(F(":"));
+    Serial.println(http_server_port);
+  }
+  
+  if (!tcp_client.connect(http_server_address, http_server_port))
   {
     if (use_debug_serial)
-    {
-      Serial.print(F("Connecting to http server at http://"));
-      Serial.print(http_server_address);
-      Serial.print(F(":"));
-      Serial.println(http_server_port);
-    }
-    if (!tcp_client.connect(http_server_address, http_server_port))
-    {
-      if (use_debug_serial)
-      {
-        Serial.print(F("Failed to connect, retrying in "));
-        Serial.print(http_retry_connect_delay_msecs);
-        Serial.println(F("ms"));
-      }
-      delay(http_retry_connect_delay_msecs);
-      continue;
-    }
-    else
-    {
-      if (use_debug_serial)
-        Serial.println(F("Successfully connected to the http server"));
-      break;
-    }
+      Serial.println(F("Failed to connect to http server"));
+    return false;
+  }
+  else
+  {
+    if (use_debug_serial)
+      Serial.println(F("Successfully connected to the http server"));
+    return true;
   }
 }

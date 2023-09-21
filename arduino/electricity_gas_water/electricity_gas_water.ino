@@ -42,6 +42,7 @@ WifiHttpClient wifi_http_client(
 TftDisplayWrapper display_wrapper;
 
 uint32_t power_consumption = 0; // in Wh
+float battery_current = 0; // -100 to 100
 
 ///                     ///
 // Function declarations //
@@ -50,6 +51,7 @@ uint32_t power_consumption = 0; // in Wh
 void setup();
 void loop();
 void on_dsmr_message_callback(FluviusDSMRData &message);
+void read_battery_current();
 void send_heartbeat();
 
 ///                    ///
@@ -90,8 +92,8 @@ void setup()
 
 void loop()
 {
-  wifi_http_client.reconnect_if_needed();
-  dsmr_wrapper.process_incoming_data();
+  wifi_http_client.reconnect_if_needed(); // blocks but fails fast
+  dsmr_wrapper.process_incoming_data(); // calls on_dsmr_message_callback for each new telegram
 
   // Call dsmr_wrapper.trigger_read() every dsmr_p1_read_interval_msecs
   {
@@ -100,11 +102,18 @@ void loop()
                                 { dsmr_wrapper.trigger_read(); });
   }
 
+  // Call read_battery_current() every battery_current_read_interval_msecs
+  {
+    static uint32_t rii_read_battery_current_state = 0;
+    run_in_interval_nonblocking(&rii_read_battery_current_state, settings.battery_current_read_interval_msecs, []()
+                                { read_battery_current(); });
+  }
+
   // Call display_wrapper.draw_metrics() every second
   {
     static uint32_t rii_display_wrapper_draw_metrics_state = 0;
     run_in_interval_nonblocking(&rii_display_wrapper_draw_metrics_state, 1000, []()
-                                { display_wrapper.draw_metrics(power_consumption, 0, String(settings.wifi_ssid)); });
+                                { display_wrapper.draw_metrics(power_consumption, battery_current, 0, String(settings.wifi_ssid)); });
   }
 
   // Call send_heartbeat() every 30 seconds
@@ -207,6 +216,14 @@ void on_dsmr_message_callback(FluviusDSMRData &message)
     }
     wifi_http_client.send_post("/", json_string);
   }
+}
+
+void read_battery_current()
+{
+  uint16_t voltage_10bit = analogRead(settings.battery_current_read_pin);
+  float voltage_normalized = voltage_10bit / 1023.0;
+  float voltage_centered_on_zero = (voltage_normalized * 2) - 1;
+  battery_current = voltage_centered_on_zero * 100;
 }
 
 void send_heartbeat()

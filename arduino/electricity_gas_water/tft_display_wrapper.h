@@ -21,7 +21,7 @@ class TftDisplayWrapper
 public:
   void init();
   void draw_sketch_version(const String &version_stamp);
-  void draw_metrics(const int32_t &power_consumption, const int32_t &teller_stand_water, const String &wifi_ssid);
+  void draw_metrics(const int32_t &power_consumption, const float &battery_current, const int32_t &teller_stand_water, const String &wifi_ssid);
 
 private:
   bool is_initialized = false;
@@ -63,23 +63,29 @@ void TftDisplayWrapper::draw_sketch_version(const String &version_stamp)
   tft.drawString(String(" IDE version: ") + String(__VERSION__), 0, 96, 4);
 }
 
-void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const int32_t &teller_stand_water, const String &wifi_ssid)
+void TftDisplayWrapper::draw_metrics(const int32_t &power_consumption, const float &battery_current, const int32_t &teller_stand_water, const String &wifi_ssid)
 {
   assert(is_initialized); // Ensure init() was called
 
   tft.fillScreen(TFT_BLACK);
-
   tft.setTextSize(1);
+  int32_t x = 10;
+  int32_t y = 10;
+  
   tft.setTextColor(power_consumption > 0 ? TFT_RED : TFT_GREEN, TFT_BLACK);
-  tft.drawString(String("PCons=") + String(power_consumption), 10, 10, 4);
+  tft.drawString(String("PCons=") + String(power_consumption), x, y, 4);
+  y += 30;
 
-  tft.setTextSize(1);
+  tft.setTextColor(battery_current > 0 ? TFT_GREEN : TFT_ORANGE, TFT_BLACK);
+  tft.drawString(String("BattCurr=") + String(battery_current, 2), x, y, 4);
+  y += 30;
+
   tft.setTextColor(TFT_BLUE, TFT_BLACK);
-  tft.drawString(String("Water=") + String(teller_stand_water), 10, 40, 4);
+  tft.drawString(String("Water=") + String(teller_stand_water), x, y, 4);
+  y += 30;
 
-  tft.setTextSize(1);
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
-  tft.drawString(String("SSID=") + String(wifi_ssid), 10, 100, 4);
+  tft.drawString(String("SSID=") + String(wifi_ssid), x, y, 4);
 
   // tft.setTextSize(1);
   // tft.setTextColor(TFT_BLUE, TFT_BLACK);
